@@ -50,7 +50,7 @@ if (WIN32)
 else()
     set(LIBRARIES v8_libbase v8_libplatform node pthread dl m)
 
-    add_custom_command(TARGET samp-node PRE_BUILD
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_SOURCE_DIR}/lib/${SYS_PATH}/${NODE_DLL}" "${CMAKE_SOURCE_DIR}/lib/${SYS_PATH}/libnode.so"
     )
 endif()
