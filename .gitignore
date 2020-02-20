@@ -1,0 +1,8 @@
+#
+# Package only files
+#
+
+build/
+.vs/
+Release/*.*
+Debug/*.*
