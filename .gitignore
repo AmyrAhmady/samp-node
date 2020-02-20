@@ -6,3 +6,4 @@ build/
 .vs/
 Release/*.*
 Debug/*.*
+test/
