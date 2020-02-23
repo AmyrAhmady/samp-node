@@ -22,3 +22,6 @@ extern logprintf_t logprintf;
     TRY(napi_create_##type (env, value, &val)); \
     TRY(napi_set_named_property(env, object, name, val)); \
 } while (0)
+
+// Newline at end of file prevents gcc giving a warning:
+// warning: backslash-newline at end of file

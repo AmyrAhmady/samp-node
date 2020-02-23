@@ -1,0 +1,21 @@
+FROM ubuntu:16.04
+RUN dpkg --add-architecture i386 \
+    && apt update \
+    && apt upgrade -y \
+    && apt install -y g++-multilib git ca-certificates
+
+# Node
+RUN apt install -y curl wget \
+    && curl -sL https://deb.nodesource.com/setup_9.x | bash -
+
+RUN apt install -y nodejs
+RUN node -v
+
+# sampctl
+COPY ./docker/sampctl-install.sh /tmp
+RUN chmod +x /tmp/sampctl-install.sh \
+    && /tmp/sampctl-install.sh
+RUN sampctl --appVersion
+
+WORKDIR /samp
+ENTRYPOINT ["sampctl package run"]

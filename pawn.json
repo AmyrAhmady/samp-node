@@ -1,0 +1,43 @@
+  
+{
+  "user": "AmyrAhmady",
+  "repo": "samp-node",
+  "entry": "test.pwn",
+  "output": "test/gamemodes/test.amx",
+  "dependencies": ["Southclaws/samp-stdlib"],
+  "dev_dependencies": ["pawn-lang/YSI-Includes@5.x"],
+  "runtime": {
+    "plugins": ["AmyrAhmady/samp-node"]
+  },
+  "resources": [
+    {
+      "name": "samp-node-.+-linux.tar.gz",
+      "archive": true,
+      "platform": "linux",
+      "plugins": [
+        "samp-node.so"
+      ],
+      "includes": [
+        "samp-node.inc"
+      ]
+    },
+    {
+      "name": "samp-node-.+-windows.zip",
+      "archive": true,
+      "platform": "windows",
+      "plugins": [
+        "samp-node.dll"
+      ],      
+      "includes": [
+        "samp_node.inc"
+      ],
+      "files": {
+        "node.dll": "node.dll"
+      }      
+    }
+  ],
+  "contributors": [
+    "AmyrAhmady",
+    "ADRFranklin"
+  ]  
+}

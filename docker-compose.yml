@@ -1,0 +1,14 @@
+version: "3"
+services:
+  # SA-MP Server
+  samp:
+    image: amyrahmady/samp-node-run
+    build:
+      context: .
+      dockerfile: Dockerfile.run
+    entrypoint: sampctl server run
+    ports:
+      - "7777:7777/udp"
+    volumes:
+      - ./test/:/samp
+    container_name: samp

@@ -1,0 +1,37 @@
+version: '2'
+tasks:
+  #
+  # BUILDING
+  #
+  prebuild:
+    cmds:
+      - mkdir -p build/
+
+  build:
+    cmds:
+      - task prebuild
+      - task build:linux
+      - task build:windows
+
+  build:linux:
+    cmds:
+      - mkdir -p releases/    
+      - docker build -f Dockerfile -t amyrahmady/samp-node-build-linux .
+      - docker run -v=$(pwd)/test/plugins:/work/test/plugins -v=$(pwd)/releases:/work/releases amyrahmady/samp-node-build-linux
+
+  build:windows:
+    dir: build
+    cmds:    
+      - mkdir -p ../releases
+      - rm -rf *
+      - cmake .. -A Win32
+      - cmake --build . --config Release
+      - cpack && mv cpack/*.zip ../releases
+
+  #
+  # TESTING
+  #
+  test:
+    cmds:
+      - sampctl package ensure && sampctl package build
+      - cd test && sampctl server run

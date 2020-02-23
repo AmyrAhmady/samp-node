@@ -1,10 +1,34 @@
 cmake_minimum_required(VERSION 3.0)
-project(samp-node)
+
+# -
+# Plugin
+# -
+
+if (NOT PLUGIN_VERSION)
+	set(PLUGIN_VERSION "1.0.0")
+endif()
+
+project(samp-node VERSION ${PLUGIN_VERSION})
+
+# -
+# Paths
+# -
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test/plugins)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/lib/cmake-modules")
+
+if(MSVC)
+	foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+		string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+		set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+	endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)		
+endif()	
+
+# -
+# Compiler Flags
+# -
 
 if(UNIX)
 	set(CMAKE_CXX_FLAGS "-m32 -std=c++11")
@@ -18,18 +42,14 @@ if(UNIX)
 endif()
 
 if(WIN32)
-	# removes the sprintf warnings from plugin-natives
 	add_definitions(
 		-D_CRT_SECURE_NO_WARNINGS
 		-DWIN32_LEAN_AND_MEAN
 	)	
-
-	if(MSVC)
-		foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
-			string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
-			set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-		endforeach(OUTPUTCONFIG CMAKE_CONFIGURATION_TYPES)		
-	endif()	
 endif()
+
+# -
+# Directories
+# -
 
 add_subdirectory(src)

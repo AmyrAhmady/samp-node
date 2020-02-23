@@ -1,9 +1,11 @@
-#
+# -
 # Package only files
-#
+# -
 
 build/
 .vs/
 Release/*.*
 Debug/*.*
 test/
+dependencies/
+releases/
