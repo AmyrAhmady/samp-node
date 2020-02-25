@@ -31,7 +31,7 @@ endif()
 # -
 
 if(UNIX)
-	set(CMAKE_CXX_FLAGS "-m32 -std=c++11")
+	set(CMAKE_CXX_FLAGS "-m32 -std=c++14")
 	set(CMAKE_C_FLAGS "-m32")
 	set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
 
