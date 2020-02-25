@@ -15,6 +15,7 @@ namespace http2 {
     IDX_SETTINGS_MAX_FRAME_SIZE,
     IDX_SETTINGS_MAX_CONCURRENT_STREAMS,
     IDX_SETTINGS_MAX_HEADER_LIST_SIZE,
+    IDX_SETTINGS_ENABLE_CONNECT_PROTOCOL,
     IDX_SETTINGS_COUNT
   };
 
@@ -84,9 +85,9 @@ namespace http2 {
     IDX_SESSION_STATS_COUNT
   };
 
-class http2_state {
+class Http2State {
  public:
-  explicit http2_state(v8::Isolate* isolate) :
+  explicit Http2State(v8::Isolate* isolate) :
     root_buffer(
       isolate,
       sizeof(http2_state_internal)),

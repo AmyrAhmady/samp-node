@@ -1,6 +1,8 @@
 #ifndef SRC_INSPECTOR_SOCKET_H_
 #define SRC_INSPECTOR_SOCKET_H_
 
+#if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
+
 #include "util-inl.h"
 #include "uv.h"
 
@@ -40,9 +42,10 @@ class InspectorSocket {
   std::string GetHost();
 
  private:
-  InspectorSocket();
+  static void Shutdown(ProtocolHandler*);
+  InspectorSocket() = default;
 
-  std::unique_ptr<ProtocolHandler, void(*)(ProtocolHandler*)> protocol_handler_;
+  DeleteFnPtr<ProtocolHandler, Shutdown> protocol_handler_;
 
   DISALLOW_COPY_AND_ASSIGN(InspectorSocket);
 };
@@ -51,5 +54,6 @@ class InspectorSocket {
 }  // namespace inspector
 }  // namespace node
 
+#endif  // defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
 
 #endif  // SRC_INSPECTOR_SOCKET_H_

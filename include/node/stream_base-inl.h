@@ -51,30 +51,36 @@ inline StreamListener::~StreamListener() {
 }
 
 inline void StreamListener::PassReadErrorToPreviousListener(ssize_t nread) {
-  CHECK_NE(previous_listener_, nullptr);
+  CHECK_NOT_NULL(previous_listener_);
   previous_listener_->OnStreamRead(nread, uv_buf_init(nullptr, 0));
 }
 
 inline void StreamListener::OnStreamAfterShutdown(ShutdownWrap* w, int status) {
-  CHECK_NE(previous_listener_, nullptr);
+  CHECK_NOT_NULL(previous_listener_);
   previous_listener_->OnStreamAfterShutdown(w, status);
 }
 
 inline void StreamListener::OnStreamAfterWrite(WriteWrap* w, int status) {
-  CHECK_NE(previous_listener_, nullptr);
+  CHECK_NOT_NULL(previous_listener_);
   previous_listener_->OnStreamAfterWrite(w, status);
 }
 
 inline StreamResource::~StreamResource() {
   while (listener_ != nullptr) {
-    listener_->OnStreamDestroy();
-    RemoveStreamListener(listener_);
+    StreamListener* listener = listener_;
+    listener->OnStreamDestroy();
+    // Remove the listener if it didn’t remove itself. This makes the logic
+    // in `OnStreamDestroy()` implementations easier, because they
+    // may call generic cleanup functions which can just remove the
+    // listener unconditionally.
+    if (listener == listener_)
+      RemoveStreamListener(listener_);
   }
 }
 
 inline void StreamResource::PushStreamListener(StreamListener* listener) {
-  CHECK_NE(listener, nullptr);
-  CHECK_EQ(listener->stream_, nullptr);
+  CHECK_NOT_NULL(listener);
+  CHECK_NULL(listener->stream_);
 
   listener->previous_listener_ = listener_;
   listener->stream_ = this;
@@ -83,7 +89,7 @@ inline void StreamResource::PushStreamListener(StreamListener* listener) {
 }
 
 inline void StreamResource::RemoveStreamListener(StreamListener* listener) {
-  CHECK_NE(listener, nullptr);
+  CHECK_NOT_NULL(listener);
 
   StreamListener* previous;
   StreamListener* current;
@@ -92,7 +98,7 @@ inline void StreamResource::RemoveStreamListener(StreamListener* listener) {
   for (current = listener_, previous = nullptr;
        /* No loop condition because we want a crash if listener is not found */
        ; previous = current, current = current->previous_listener_) {
-    CHECK_NE(current, nullptr);
+    CHECK_NOT_NULL(current);
     if (current == listener) {
       if (previous != nullptr)
         previous->previous_listener_ = current->previous_listener_;
@@ -106,23 +112,41 @@ inline void StreamResource::RemoveStreamListener(StreamListener* listener) {
   listener->previous_listener_ = nullptr;
 }
 
-
 inline uv_buf_t StreamResource::EmitAlloc(size_t suggested_size) {
+#ifdef DEBUG
+  v8::SealHandleScope handle_scope(v8::Isolate::GetCurrent());
+#endif
   return listener_->OnStreamAlloc(suggested_size);
 }
 
 inline void StreamResource::EmitRead(ssize_t nread, const uv_buf_t& buf) {
+#ifdef DEBUG
+  v8::SealHandleScope handle_scope(v8::Isolate::GetCurrent());
+#endif
   if (nread > 0)
     bytes_read_ += static_cast<uint64_t>(nread);
   listener_->OnStreamRead(nread, buf);
 }
 
 inline void StreamResource::EmitAfterWrite(WriteWrap* w, int status) {
+#ifdef DEBUG
+  v8::SealHandleScope handle_scope(v8::Isolate::GetCurrent());
+#endif
   listener_->OnStreamAfterWrite(w, status);
 }
 
 inline void StreamResource::EmitAfterShutdown(ShutdownWrap* w, int status) {
+#ifdef DEBUG
+  v8::SealHandleScope handle_scope(v8::Isolate::GetCurrent());
+#endif
   listener_->OnStreamAfterShutdown(w, status);
+}
+
+inline void StreamResource::EmitWantsWrite(size_t suggested_size) {
+#ifdef DEBUG
+  v8::SealHandleScope handle_scope(v8::Isolate::GetCurrent());
+#endif
+  listener_->OnStreamWantsWrite(suggested_size);
 }
 
 inline StreamBase::StreamBase(Environment* env) : env_(env) {
@@ -133,35 +157,16 @@ inline Environment* StreamBase::stream_env() const {
   return env_;
 }
 
-inline void StreamBase::AfterWrite(WriteWrap* req_wrap, int status) {
-  AfterRequest(req_wrap, [&]() {
-    EmitAfterWrite(req_wrap, status);
-  });
-}
-
-inline void StreamBase::AfterShutdown(ShutdownWrap* req_wrap, int status) {
-  AfterRequest(req_wrap, [&]() {
-    EmitAfterShutdown(req_wrap, status);
-  });
-}
-
-template<typename Wrap, typename EmitEvent>
-inline void StreamBase::AfterRequest(Wrap* req_wrap, EmitEvent emit) {
-  Environment* env = stream_env();
-
-  v8::HandleScope handle_scope(env->isolate());
-  v8::Context::Scope context_scope(env->context());
-
-  emit();
-  req_wrap->Dispose();
-}
-
 inline int StreamBase::Shutdown(v8::Local<v8::Object> req_wrap_obj) {
   Environment* env = stream_env();
+
+  HandleScope handle_scope(env->isolate());
+
   if (req_wrap_obj.IsEmpty()) {
     req_wrap_obj =
-        env->shutdown_wrap_constructor_function()
+        env->shutdown_wrap_template()
             ->NewInstance(env->context()).ToLocalChecked();
+    StreamReq::ResetObject(req_wrap_obj);
   }
 
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(GetAsyncWrap());
@@ -188,17 +193,26 @@ inline StreamWriteResult StreamBase::Write(
     v8::Local<v8::Object> req_wrap_obj) {
   Environment* env = stream_env();
   int err;
+
+  size_t total_bytes = 0;
+  for (size_t i = 0; i < count; ++i)
+    total_bytes += bufs[i].len;
+  bytes_written_ += total_bytes;
+
   if (send_handle == nullptr) {
     err = DoTryWrite(&bufs, &count);
     if (err != 0 || count == 0) {
-      return StreamWriteResult { false, err, nullptr };
+      return StreamWriteResult { false, err, nullptr, total_bytes };
     }
   }
 
+  HandleScope handle_scope(env->isolate());
+
   if (req_wrap_obj.IsEmpty()) {
     req_wrap_obj =
-        env->write_wrap_constructor_function()
+        env->write_wrap_template()
             ->NewInstance(env->context()).ToLocalChecked();
+    StreamReq::ResetObject(req_wrap_obj);
   }
 
   AsyncHooks::DefaultTriggerAsyncIdScope trigger_scope(GetAsyncWrap());
@@ -218,7 +232,7 @@ inline StreamWriteResult StreamBase::Write(
     ClearError();
   }
 
-  return StreamWriteResult { async, err, req_wrap };
+  return StreamWriteResult { async, err, req_wrap, total_bytes };
 }
 
 template <typename OtherBase>
@@ -229,12 +243,6 @@ SimpleShutdownWrap<OtherBase>::SimpleShutdownWrap(
     OtherBase(stream->stream_env(),
               req_wrap_obj,
               AsyncWrap::PROVIDER_SHUTDOWNWRAP) {
-  Wrap(req_wrap_obj, static_cast<AsyncWrap*>(this));
-}
-
-template <typename OtherBase>
-SimpleShutdownWrap<OtherBase>::~SimpleShutdownWrap() {
-  ClearWrap(static_cast<AsyncWrap*>(this)->object());
 }
 
 inline ShutdownWrap* StreamBase::CreateShutdownWrap(
@@ -250,12 +258,6 @@ SimpleWriteWrap<OtherBase>::SimpleWriteWrap(
     OtherBase(stream->stream_env(),
               req_wrap_obj,
               AsyncWrap::PROVIDER_WRITEWRAP) {
-  Wrap(req_wrap_obj, static_cast<AsyncWrap*>(this));
-}
-
-template <typename OtherBase>
-SimpleWriteWrap<OtherBase>::~SimpleWriteWrap() {
-  ClearWrap(static_cast<AsyncWrap*>(this)->object());
 }
 
 inline WriteWrap* StreamBase::CreateWriteWrap(
@@ -264,9 +266,7 @@ inline WriteWrap* StreamBase::CreateWriteWrap(
 }
 
 template <class Base>
-void StreamBase::AddMethods(Environment* env,
-                            Local<FunctionTemplate> t,
-                            int flags) {
+void StreamBase::AddMethods(Environment* env, Local<FunctionTemplate> t) {
   HandleScope scope(env->isolate());
 
   enum PropertyAttribute attributes =
@@ -275,23 +275,30 @@ void StreamBase::AddMethods(Environment* env,
 
   Local<Signature> signature = Signature::New(env->isolate(), t);
 
+  // TODO(TimothyGu): None of these should have ConstructorBehavior::kAllow.
   Local<FunctionTemplate> get_fd_templ =
-      FunctionTemplate::New(env->isolate(),
-                            GetFD<Base>,
-                            env->as_external(),
-                            signature);
+      env->NewFunctionTemplate(GetFD<Base>,
+                               signature,
+                               v8::ConstructorBehavior::kAllow,
+                               v8::SideEffectType::kHasNoSideEffect);
 
   Local<FunctionTemplate> get_external_templ =
-      FunctionTemplate::New(env->isolate(),
-                            GetExternal<Base>,
-                            env->as_external(),
-                            signature);
+      env->NewFunctionTemplate(GetExternal<Base>,
+                               signature,
+                               v8::ConstructorBehavior::kAllow,
+                               v8::SideEffectType::kHasNoSideEffect);
 
   Local<FunctionTemplate> get_bytes_read_templ =
-      FunctionTemplate::New(env->isolate(),
-                            GetBytesRead<Base>,
-                            env->as_external(),
-                            signature);
+      env->NewFunctionTemplate(GetBytesRead<Base>,
+                               signature,
+                               v8::ConstructorBehavior::kAllow,
+                               v8::SideEffectType::kHasNoSideEffect);
+
+  Local<FunctionTemplate> get_bytes_written_templ =
+      env->NewFunctionTemplate(GetBytesWritten<Base>,
+                               signature,
+                               v8::ConstructorBehavior::kAllow,
+                               v8::SideEffectType::kHasNoSideEffect);
 
   t->PrototypeTemplate()->SetAccessorProperty(env->fd_string(),
                                               get_fd_templ,
@@ -308,12 +315,15 @@ void StreamBase::AddMethods(Environment* env,
                                               Local<FunctionTemplate>(),
                                               attributes);
 
+  t->PrototypeTemplate()->SetAccessorProperty(env->bytes_written_string(),
+                                              get_bytes_written_templ,
+                                              Local<FunctionTemplate>(),
+                                              attributes);
+
   env->SetProtoMethod(t, "readStart", JSMethod<Base, &StreamBase::ReadStartJS>);
   env->SetProtoMethod(t, "readStop", JSMethod<Base, &StreamBase::ReadStopJS>);
-  if ((flags & kFlagNoShutdown) == 0)
-    env->SetProtoMethod(t, "shutdown", JSMethod<Base, &StreamBase::Shutdown>);
-  if ((flags & kFlagHasWritev) != 0)
-    env->SetProtoMethod(t, "writev", JSMethod<Base, &StreamBase::Writev>);
+  env->SetProtoMethod(t, "shutdown", JSMethod<Base, &StreamBase::Shutdown>);
+  env->SetProtoMethod(t, "writev", JSMethod<Base, &StreamBase::Writev>);
   env->SetProtoMethod(t,
                       "writeBuffer",
                       JSMethod<Base, &StreamBase::WriteBuffer>);
@@ -349,7 +359,6 @@ void StreamBase::GetFD(const FunctionCallbackInfo<Value>& args) {
 
 template <class Base>
 void StreamBase::GetBytesRead(const FunctionCallbackInfo<Value>& args) {
-  // The handle instance hasn't been set. So no bytes could have been read.
   Base* handle;
   ASSIGN_OR_RETURN_UNWRAP(&handle,
                           args.This(),
@@ -358,6 +367,18 @@ void StreamBase::GetBytesRead(const FunctionCallbackInfo<Value>& args) {
   StreamBase* wrap = static_cast<StreamBase*>(handle);
   // uint64_t -> double. 53bits is enough for all real cases.
   args.GetReturnValue().Set(static_cast<double>(wrap->bytes_read_));
+}
+
+template <class Base>
+void StreamBase::GetBytesWritten(const FunctionCallbackInfo<Value>& args) {
+  Base* handle;
+  ASSIGN_OR_RETURN_UNWRAP(&handle,
+                          args.This(),
+                          args.GetReturnValue().Set(0));
+
+  StreamBase* wrap = static_cast<StreamBase*>(handle);
+  // uint64_t -> double. 53bits is enough for all real cases.
+  args.GetReturnValue().Set(static_cast<double>(wrap->bytes_written_));
 }
 
 template <class Base>
@@ -387,11 +408,12 @@ void StreamBase::JSMethod(const FunctionCallbackInfo<Value>& args) {
 
 
 inline void ShutdownWrap::OnDone(int status) {
-  stream()->AfterShutdown(this, status);
+  stream()->EmitAfterShutdown(this, status);
+  Dispose();
 }
 
 inline void WriteWrap::SetAllocatedStorage(char* data, size_t size) {
-  CHECK_EQ(storage_, nullptr);
+  CHECK_NULL(storage_);
   storage_ = data;
   storage_size_ = size;
 }
@@ -405,7 +427,8 @@ inline size_t WriteWrap::StorageSize() const {
 }
 
 inline void WriteWrap::OnDone(int status) {
-  stream()->AfterWrite(this, status);
+  stream()->EmitAfterWrite(this, status);
+  Dispose();
 }
 
 inline void StreamReq::Done(int status, const char* error_str) {
@@ -418,6 +441,15 @@ inline void StreamReq::Done(int status, const char* error_str) {
 
   OnDone(status);
 }
+
+inline void StreamReq::ResetObject(v8::Local<v8::Object> obj) {
+#ifdef DEBUG
+  CHECK_GT(obj->InternalFieldCount(), StreamReq::kStreamReqField);
+#endif
+  obj->SetAlignedPointerInInternalField(0, nullptr);  // BaseObject field.
+  obj->SetAlignedPointerInInternalField(StreamReq::kStreamReqField, nullptr);
+}
+
 
 }  // namespace node
 
