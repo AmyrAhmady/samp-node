@@ -1,4 +1,4 @@
-
+#include <cstring>
 #include "node.h"
 #include "node_api.h"
 #include "env.h"
