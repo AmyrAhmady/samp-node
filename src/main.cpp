@@ -53,7 +53,5 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* amx)
 	return 1;
 }
 
-#endif
-
 enum { NM_F_BUILTIN = 1 << 0 };
 NAPI_MODULE_X(samp, samp_node_init, NULL, NM_F_BUILTIN)
