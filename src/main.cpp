@@ -1,15 +1,13 @@
 #include <iostream>
 #include <amx/amx.h>
 #include <plugincommon.h>
-
 #include "node_api.h"
+
 #include "common.hpp"
 
 bool node_init();
 void node_tick();
 void node_stop();
-
-logprintf_t logprintf;
 
 napi_value samp_node_init(napi_env env, napi_value exports) 
 {
@@ -34,10 +32,8 @@ PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports()
 
 PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 {
+	node_init();
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
-	logprintf = (logprintf_t)ppData[PLUGIN_DATA_LOGPRINTF];
-
-	node_init();	
 	return true;
 }
 
@@ -56,6 +52,8 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* amx)
 {
 	return 1;
 }
+
+#endif
 
 enum { NM_F_BUILTIN = 1 << 0 };
 NAPI_MODULE_X(samp, samp_node_init, NULL, NM_F_BUILTIN)
