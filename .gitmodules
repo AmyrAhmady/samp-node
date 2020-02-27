@@ -1,6 +1,6 @@
-[submodule "lib/samp-plugin-sdk"]
-	path = lib/samp-plugin-sdk
+[submodule "deps/samp-plugin-sdk"]
+	path = deps/samp-plugin-sdk
 	url = https://github.com/maddinat0r/samp-plugin-sdk
-[submodule "lib/cmake-modules"]
-	path = lib/cmake-modules
+[submodule "deps/cmake-modules"]
+	path = deps/cmake-modules
 	url = https://github.com/Zeex/cmake-modules

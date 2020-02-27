@@ -11,7 +11,7 @@ add_definitions(-DBUILDING_NODE_EXTENSION=1 -DEXTERNAL_NAPI=1)
 # Paths
 # -
 
-set(SAMP_SDK_ROOT "${PROJECT_SOURCE_DIR}/lib/samp-plugin-sdk")
+set(SAMP_SDK_ROOT "${PROJECT_SOURCE_DIR}/deps/samp-plugin-sdk")
 
 if (WIN32)
     if (WIN64)
@@ -23,7 +23,7 @@ else()
     set(SYS_PATH linux)
 endif()
 
-set(NODE_PATH "${PROJECT_SOURCE_DIR}/lib/node/${SYS_PATH}")
+set(NODE_PATH "${PROJECT_SOURCE_DIR}/deps/node/lib/Release/${SYS_PATH}")
 
 # -
 # Dependencies
@@ -33,10 +33,10 @@ find_package(SAMPSDK REQUIRED)
 
 include_directories(
 	${SAMPSDK_INCLUDE_DIR}
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/include/node
-	${PROJECT_SOURCE_DIR}/include/v8
-	${PROJECT_SOURCE_DIR}/include/uv
+	${PROJECT_SOURCE_DIR}/deps/sampgdk
+	${PROJECT_SOURCE_DIR}/deps/node/include
+	${PROJECT_SOURCE_DIR}/deps/v8
+	${PROJECT_SOURCE_DIR}/deps/uv
 )
 
 # -
