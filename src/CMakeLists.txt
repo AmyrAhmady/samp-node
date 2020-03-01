@@ -50,8 +50,8 @@ add_samp_plugin(${PROJECT_NAME}
 	${SAMPSDK_DIR}/amxplugin2.cpp
 	common.hpp
 	main.cpp
-	impl.cpp
-	impl.hpp
+	v8impl.cpp
+	v8impl.hpp
 	natives.cpp
 	natives.hpp
 	node.cpp

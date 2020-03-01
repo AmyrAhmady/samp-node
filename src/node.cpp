@@ -8,8 +8,8 @@
 #include "uv.h"
 #include "node.h"
 #include "libplatform/libplatform.h"
+#include "v8impl.hpp"
 
-#include "impl.hpp"
 
 v8::UniquePersistent<v8::Context> m_context;
 node::Environment* m_nodeEnvironment;
