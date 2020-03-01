@@ -8,12 +8,13 @@
 #include "uv.h"
 #include "node.h"
 #include "libplatform/libplatform.h"
+#include "amx/amx.h"
+#include "functions.hpp"
+#include "events.hpp"
 #include "v8impl.hpp"
-
 
 v8::UniquePersistent<v8::Context> m_context;
 node::Environment* m_nodeEnvironment;
-
 static V8ScriptGlobals g_v8;
 
 v8::Isolate* GetV8Isolate()
@@ -59,10 +60,12 @@ bool node_init()
 {
 	const char* argvv[] = { "node", "./index.js" };
 	int argc = 2;
-	char** argv = uv_setup_args(2, (char **)argvv);
+	char** argv = uv_setup_args(2, (char**)argvv);
 	int exec_argc;
 	const char** exec_argv;
 	g_v8.Initialize(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
+
+	sampnode::event::init();
 
 	v8::Locker locker(GetV8Isolate());
 	v8::Isolate::Scope isolateScope(GetV8Isolate());
@@ -73,6 +76,7 @@ bool node_init()
 	global->Set(v8::String::NewFromUtf8(GetV8Isolate(), "print", v8::NewStringType::kNormal).ToLocalChecked(),
 		v8::FunctionTemplate::New(GetV8Isolate(), LMAO));
 
+	sampnode::functions::init(GetV8Isolate(), global);
 
 	v8::Local<v8::Context> context = v8::Context::New(GetV8Isolate(), nullptr, global);
 	m_context.Reset(GetV8Isolate(), context);
@@ -95,4 +99,12 @@ void node_stop()
 {
 	node::FreeEnvironment(m_nodeEnvironment);
 	m_context.Reset();
+}
+
+void node_event_callback(const std::string& name, AMX* amx, cell* params, cell* retval)
+{
+	//printf("\nEvent about to call: %s\n", name.c_str());
+	if (sampnode::events.find(name) != sampnode::events.end())
+		sampnode::events[name]->call(amx, params, retval);
+	return;
 }

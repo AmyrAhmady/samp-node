@@ -4,4 +4,4 @@ EXPORTS
 	Unload
 	AmxLoad
 	AmxUnload
-	OnPlayerConnect
+	OnPublicCall
