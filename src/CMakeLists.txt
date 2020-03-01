@@ -45,16 +45,16 @@ include_directories(
 
 link_directories(${NODE_PATH})
 
+file(GLOB SAMPNODE_FILES
+	*.hpp
+	*.cpp
+)
+
 add_samp_plugin(${PROJECT_NAME}
 	${SAMPSDK_DIR}/amxplugin.cpp
 	${SAMPSDK_DIR}/amxplugin2.cpp
-	common.hpp
-	main.cpp
-	v8impl.cpp
-	v8impl.hpp
-	natives.cpp
-	natives.hpp
-	node.cpp
+	${PROJECT_SOURCE_DIR}/deps/sampgdk/sampgdk.c
+	${SAMPNODE_FILES}
 	plugin.def
 )
 
