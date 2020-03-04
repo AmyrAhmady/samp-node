@@ -26,7 +26,6 @@ namespace sampnode
 	{
 		if (events.find(eventName) != events.end()) return false;
 		events.insert({ eventName, new event(eventName, param_types) });
-		printf("\nregistered %s\n", eventName.c_str());
 		return true;
 	}
 
@@ -44,7 +43,7 @@ namespace sampnode
 			{
 				std::string& eventName = utils::js_to_string(info[0]);
 				std::string& paramTypes = utils::js_to_string(info[1]);
-				if (events.find(eventName) == events.end())
+				if (events.find(eventName) != events.end())
 				{
 					info.GetReturnValue().Set(false);
 					return;
@@ -247,7 +246,7 @@ namespace sampnode
 				v8::String::Utf8Value str(listener.isolate, eh.Exception());
 				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
 
-				printf("Error calling system event handling function in resource: %s\nstack:\n%s\n", *str, *stack);
+				printf("[samp-node] event handling function in resource: %s\nstack:\n%s\n", *str, *stack);
 			}
 		}
 	}
