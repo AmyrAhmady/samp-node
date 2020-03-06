@@ -45,7 +45,6 @@ namespace sampnode
 
 		};
 
-		static void init();
 		static void on(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void remove_listener(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void register_event(const v8::FunctionCallbackInfo<v8::Value>& info);

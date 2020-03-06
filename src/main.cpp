@@ -1,4 +1,5 @@
 #include <iostream>
+#include "callbacks.hpp"
 #include <sampgdk.h>
 #include "common.hpp"
 
@@ -28,7 +29,7 @@ PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports()
 PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 {
 	sampgdk::Load(ppData);
-	//sampnode::event::init();
+	sampnode::callback::init();
 	node_init();
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	return true;

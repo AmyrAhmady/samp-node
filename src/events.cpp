@@ -14,14 +14,6 @@ namespace sampnode
 
 	eventsContainer events = eventsContainer();
 
-	void event::init()
-	{
-		register_event("OnGameModeInit", "");
-		register_event("OnPlayerConnect", "i");
-		register_event("OnPlayerTakeDamage", "iifii");
-		register_event("OnPlayerCommandText", "is");
-	}
-
 	bool event::register_event(const std::string& eventName, const std::string& param_types)
 	{
 		if (events.find(eventName) != events.end()) return false;
@@ -198,37 +190,42 @@ namespace sampnode
 			unsigned int argc = paramTypes.length();
 			argv = new v8::Local<v8::Value>[argc];;
 			size_t param_count = params[0] / sizeof(cell);
-			for (unsigned int i = 0; i < argc; i++) {
-				switch (paramTypes[i]) {
-				case 's': {
+			for (unsigned int i = 0; i < argc; i++)
+			{
+				switch (paramTypes[i])
+				{
+				case 's':
+				{
 					cell* maddr = NULL;
 					int len = 0;
 					char* sval;
-					if (amx_GetAddr(amx, params[i + 1], &maddr) != AMX_ERR_NONE) {
+					if (amx_GetAddr(amx, params[i + 1], &maddr) != AMX_ERR_NONE)
+					{
 						printf("Can't get string address: %s", name.c_str());
 						return;
 					}
-
 					amx_StrLen(maddr, &len);
-
 					sval = new char[len + 1];
-					if (amx_GetString(sval, maddr, 0, len + 1) != AMX_ERR_NONE) {
+					if (amx_GetString(sval, maddr, 0, len + 1) != AMX_ERR_NONE)
+					{
 						printf("Can't get string: %s", name.c_str());
 						return;
 					}
 					argv[i] = v8::String::NewFromUtf8(isolate, sval);
-
-
 					break;
 				}
-				case 'd': {
+				case 'd':
+				{
 					argv[i] = v8::Integer::New(isolate, static_cast<int32_t>(params[i + 1]));
 					break;
 				}
-				case 'i': {
+				case 'i':
+				{
 					argv[i] = v8::Integer::New(isolate, static_cast<uint16_t>(params[i + 1]));
 					break;
-				} case 'f': {
+				}
+				case 'f':
+				{
 					argv[i] = v8::Number::New(isolate, amx_ctof(params[i + 1]));
 					break;
 				}
