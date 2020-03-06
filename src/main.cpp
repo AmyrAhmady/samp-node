@@ -1,23 +1,21 @@
 #include <iostream>
 #include "callbacks.hpp"
+#include "events.hpp"
+#include "node.hpp"
 #include <sampgdk.h>
 #include "common.hpp"
 
-bool node_init();
-void node_tick();
-void node_stop();
-void node_event_callback(const std::string& name, AMX* amx, cell* params, cell* retval);
-
 PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX* amx, const char* name, cell* params, cell* retval)
 {
-	node_event_callback(name, amx, params, retval);
+	if (sampnode::events.find(name) != sampnode::events.end())
+		sampnode::events[name]->call(amx, params, retval);
 	return true;
 }
 
 PLUGIN_EXPORT void PLUGIN_CALL ProcessTick()
 {
 	sampgdk::ProcessTick();
-	node_tick();
+	sampnode::node_tick();
 	return;
 }
 
@@ -30,7 +28,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 {
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
-	node_init();
+	sampnode::node_init();
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	return true;
 }
@@ -43,7 +41,7 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx)
 PLUGIN_EXPORT void PLUGIN_CALL Unload()
 {
 	sampgdk::Unload();
-	node_stop();
+	sampnode::node_stop();
 	return;
 }
 
