@@ -65,8 +65,6 @@ bool node_init()
 	const char** exec_argv;
 	g_v8.Initialize(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
 
-	sampnode::event::init();
-
 	v8::Locker locker(GetV8Isolate());
 	v8::Isolate::Scope isolateScope(GetV8Isolate());
 	v8::HandleScope handleScope(GetV8Isolate());
@@ -103,7 +101,6 @@ void node_stop()
 
 void node_event_callback(const std::string& name, AMX* amx, cell* params, cell* retval)
 {
-	//printf("\nEvent about to call: %s\n", name.c_str());
 	if (sampnode::events.find(name) != sampnode::events.end())
 		sampnode::events[name]->call(amx, params, retval);
 	return;

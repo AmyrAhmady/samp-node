@@ -12,7 +12,7 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "addListener", sampnode::event::on },
 	{ "removeListener", sampnode::event::remove_listener },
 	{ "removeEventListener", sampnode::event::remove_listener },
-	{ "registerEvent", sampnode::event::register_event	},
+	{ "registerEvent", sampnode::event::register_event },
 };
 
 namespace sampnode
