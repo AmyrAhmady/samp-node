@@ -15,8 +15,6 @@
 #include "v8impl.hpp"
 #include "logger.hpp"
 
-v8::UniquePersistent<v8::Context> m_context;
-node::Environment* m_nodeEnvironment;
 static V8ScriptGlobals g_v8;
 
 v8::Isolate* GetV8Isolate()
@@ -36,6 +34,8 @@ static node::IsolateData* GetNodeIsolate()
 
 namespace sampnode
 {
+	v8::UniquePersistent<v8::Context> m_context; 
+	node::Environment* m_nodeEnvironment;
 	bool node_init()
 	{
 		const char* argvv[] = { "node", "./index.js" };
@@ -49,7 +49,7 @@ namespace sampnode
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
 		v8::HandleScope handleScope(GetV8Isolate());
 
-		v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(GetV8Isolate()); 
+		v8::Local<v8::ObjectTemplate> global = v8::ObjectTemplate::New(GetV8Isolate());
 		sampnode::functions::init(GetV8Isolate(), global);
 		sampnode::callback::add_event_definitions(GetV8Isolate(), global);
 
@@ -57,9 +57,7 @@ namespace sampnode
 		m_context.Reset(GetV8Isolate(), context);
 		v8::Context::Scope scope(context);
 
-
 		auto env = node::CreateEnvironment(GetNodeIsolate(), context, 2, argv, exec_argc, exec_argv);
-
 		node::LoadEnvironment(env);
 		m_nodeEnvironment = env;
 
@@ -146,6 +144,53 @@ namespace sampnode
 
 		return v8::Local<v8::Value>();
 	}
+
+	void node_throw_exception(const std::string& text, ExceptionType type)
+	{
+		v8::Isolate* isolate = GetV8Isolate();
+		if (type == ExceptionType::REGULAR_ERROR)
+		{
+			isolate->ThrowException(
+				v8::Exception::Error(
+					v8::String::NewFromUtf8(isolate, text.c_str())
+				)
+			);
+		}
+		else if (type == ExceptionType::REFERENCE_ERROR)
+		{
+			isolate->ThrowException(
+				v8::Exception::ReferenceError(
+					v8::String::NewFromUtf8(isolate, text.c_str())
+				)
+			);
+		}
+		else if (type == ExceptionType::RANGE_ERROR)
+		{
+			isolate->ThrowException(
+				v8::Exception::RangeError(
+					v8::String::NewFromUtf8(isolate, text.c_str())
+				)
+			);
+		}
+		else if (type == ExceptionType::TYPE_ERROR)
+		{
+			isolate->ThrowException(
+				v8::Exception::TypeError(
+					v8::String::NewFromUtf8(isolate, text.c_str())
+				)
+			);
+		}
+		else if (type == ExceptionType::SYNTAX_ERROR)
+		{
+			isolate->ThrowException(
+				v8::Exception::SyntaxError(
+					v8::String::NewFromUtf8(isolate, text.c_str())
+				)
+			);
+		}
+
+	}
+
 	void v8val::add_definition(const std::string& name, const std::string& value, v8::Local<v8::ObjectTemplate>& global)
 	{
 		v8::Local<v8::Value> test = v8::String::NewFromUtf8(GetV8Isolate(), value.c_str(), v8::NewStringType::kNormal, static_cast<int>(value.length())).ToLocalChecked();
