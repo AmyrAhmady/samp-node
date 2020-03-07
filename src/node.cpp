@@ -77,6 +77,75 @@ namespace sampnode
 		m_context.Reset();
 	}
 
+	v8::Local<v8::Value> node_execute_code(const std::string& source, const std::string& name)
+	{
+		v8::Isolate* isolate = GetV8Isolate();
+		v8::Locker v8Locker(isolate);
+		v8::Isolate::Scope isolate_scope(isolate);
+		v8::HandleScope hs(isolate);
+		v8::EscapableHandleScope handle_scope(isolate);
+		v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, m_context);
+		v8::Context::Scope context_scope(ctx);
+
+		auto scriptname = v8::String::NewFromUtf8(isolate, name.c_str());
+		v8::ScriptOrigin origin(scriptname, v8::Integer::New(isolate, -1));
+		auto sourceCode = v8::String::NewFromUtf8(isolate, source.c_str());
+
+		v8::TryCatch try_catch(isolate);
+
+		auto script = v8::Script::Compile(sourceCode, &origin);
+
+		if (script.IsEmpty()) {
+			isolate->CancelTerminateExecution();
+			v8::String::Utf8Value exception(try_catch.Exception());
+			const char* exception_string = *exception;
+			v8::Local<v8::Message> message = try_catch.Message();
+
+			if (message.IsEmpty()) {
+				L_ERROR << exception_string;
+			}
+			else {
+				v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
+				const char* filename_string = *filename;
+				int linenum = message->GetLineNumber();
+
+				L_ERROR << filename_string << ":" << linenum << ": " << exception_string;
+				v8::String::Utf8Value sourceline(message->GetSourceLine());
+				const char* sourceline_string = *sourceline;
+				L_INFO << sourceline_string;
+			}
+		}
+		else {
+			try_catch.Reset();
+			v8::Local<v8::Value> result = script->Run();
+			if (try_catch.HasCaught()) {
+				isolate->CancelTerminateExecution();
+				v8::String::Utf8Value exception(try_catch.Exception());
+				const char* exception_string = *exception;
+				v8::Local<v8::Message> message = try_catch.Message();
+
+				if (message.IsEmpty()) {
+					L_ERROR << exception_string;
+				}
+				else {
+					v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
+					const char* filename_string = *filename;
+					int linenum = message->GetLineNumber();
+
+					L_ERROR << filename_string << ":" << linenum << ": " << exception_string;
+					v8::String::Utf8Value sourceline(message->GetSourceLine());
+					const char* sourceline_string = *sourceline;
+					L_INFO << sourceline_string;
+				}
+				v8::Local<v8::Value> ret;
+				return ret;
+			}
+
+			return handle_scope.Escape(result);
+		}
+
+		return v8::Local<v8::Value>();
+	}
 	void v8val::add_definition(const std::string& name, const std::string& value, v8::Local<v8::ObjectTemplate>& global)
 	{
 		v8::Local<v8::Value> test = v8::String::NewFromUtf8(GetV8Isolate(), value.c_str(), v8::NewStringType::kNormal, static_cast<int>(value.length())).ToLocalChecked();
