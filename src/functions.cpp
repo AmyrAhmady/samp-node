@@ -3,6 +3,7 @@
 #include "v8.h"
 #include "functions.hpp"
 #include "events.hpp"
+#include "natives.hpp"
 
 
 static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] =
@@ -13,16 +14,20 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "removeListener", sampnode::event::remove_listener },
 	{ "removeEventListener", sampnode::event::remove_listener },
 	{ "registerEvent", sampnode::event::register_event },
+	{ "callNative", sampnode::native::call_pawn_native },
 };
 
 namespace sampnode
 {
 	void functions::init(v8::Isolate* isolate, v8::Local<v8::ObjectTemplate>& global)
 	{
+		v8::Local<v8::ObjectTemplate> sampObject = v8::ObjectTemplate::New(isolate);
 		for (auto& routine : sampnodeSpecificFunctions)
 		{
-			global->Set(v8::String::NewFromUtf8(isolate, routine.first.c_str(), v8::NewStringType::kNormal).ToLocalChecked(),
+			sampObject->Set(v8::String::NewFromUtf8(isolate, routine.first.c_str(), v8::NewStringType::kNormal).ToLocalChecked(),
 				v8::FunctionTemplate::New(isolate, routine.second));
 		}
+
+		global->Set(v8::String::NewFromUtf8(isolate, "samp", v8::NewStringType::kNormal).ToLocalChecked(), sampObject);
 	}
 }

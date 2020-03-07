@@ -1,14 +1,14 @@
-/*
-# natives.hpp
-*/
+#pragma once
 
-#ifndef SAMP_NODE_NATIVES_H
-#define SAMP_NODE_NATIVES_H
-
+#include <unordered_map>
 #include <string>
+#include "amx/amx.h"
 
-#include <amx/amx2.h>
-
-#include "common.hpp"
-
-#endif
+namespace sampnode
+{
+	namespace native
+	{
+		void call_pawn_native(const v8::FunctionCallbackInfo<v8::Value>& args);
+		AMX_NATIVE get_address(const std::string& name);
+	}
+}
