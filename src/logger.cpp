@@ -1,6 +1,6 @@
 #include <fstream>
 #include <iostream>
-#include "log.hpp"
+#include "logger.hpp"
 #include <ctime>
 
 void Log::Init()

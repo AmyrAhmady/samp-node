@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include "v8.h"
-#include "log.hpp"
+#include "logger.hpp"
 #include "node.hpp"
 #include "events.hpp"
 #include "callbacks.hpp"

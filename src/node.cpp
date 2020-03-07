@@ -13,7 +13,7 @@
 #include "callbacks.hpp"
 #include "events.hpp"
 #include "v8impl.hpp"
-#include "log.hpp"
+#include "logger.hpp"
 
 v8::UniquePersistent<v8::Context> m_context;
 node::Environment* m_nodeEnvironment;

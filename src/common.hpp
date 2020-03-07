@@ -20,3 +20,7 @@ extern void* pAMXFunctions;
     TRY(napi_create_##type (env, value, &val)); \
     TRY(napi_set_named_property(env, object, name, val)); \
 } while (0)
+
+
+#include "logger.hpp"
+#include "utils.hpp"
