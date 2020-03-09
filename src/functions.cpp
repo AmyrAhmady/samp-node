@@ -4,6 +4,7 @@
 #include "functions.hpp"
 #include "events.hpp"
 #include "natives.hpp"
+#include "callbacks.hpp"
 
 
 static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] =
@@ -15,6 +16,7 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "removeEventListener", sampnode::event::remove_listener },
 	{ "registerEvent", sampnode::event::register_event },
 	{ "callNative", sampnode::native::call_pawn_native },
+	{ "callPublic", sampnode::callback::call },
 };
 
 namespace sampnode
