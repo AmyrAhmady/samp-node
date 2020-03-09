@@ -242,7 +242,17 @@ namespace sampnode
 					case 's':
 					{
 						char* string = static_cast<char*>(params[i]);
-						amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+						if (string != NULL && strlen(string) > 0)
+						{
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+						}
+						else
+						{
+							*string = 1;
+							*(string + 1) = 0;
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+						}
+
 						numberOfStrings++;
 					}
 					break;
