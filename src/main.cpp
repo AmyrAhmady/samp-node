@@ -1,6 +1,7 @@
 #include <iostream>
 #include "callbacks.hpp"
 #include "events.hpp"
+#include "amxhandler.hpp"
 #include "node.hpp"
 #include <sampgdk.h>
 #include "common.hpp"
@@ -36,6 +37,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx)
 {
+	sampnode::amx::load(amx);
 	return 1;
 }
 
@@ -48,5 +50,6 @@ PLUGIN_EXPORT void PLUGIN_CALL Unload()
 
 PLUGIN_EXPORT int PLUGIN_CALL AmxUnload(AMX* amx)
 {
+	sampnode::amx::unload(amx);
 	return 1;
 }
