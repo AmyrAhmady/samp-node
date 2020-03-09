@@ -11,6 +11,7 @@
 
 namespace sampnode
 {
+	bool js_calling_public = false;
 	static const std::vector<callback::data> sampCallbacks =
 	{
 		{ "OnGameModeInit", "", "EVENT_GAME_MODE_INIT" },
@@ -258,7 +259,9 @@ namespace sampnode
 					}
 				}
 
+				js_calling_public = true;
 				amx_Exec(amx.second->get(), NULL, callback);
+				js_calling_public = false;
 
 				while (numberOfStrings)
 				{

@@ -18,4 +18,6 @@ namespace sampnode
 		static void add_event_definitions(v8::Isolate* isolate, v8::Local<v8::ObjectTemplate>& global);
 		static void call(const v8::FunctionCallbackInfo<v8::Value>& info);
 	};
+
+	extern bool js_calling_public;
 }

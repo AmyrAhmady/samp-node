@@ -8,6 +8,8 @@
 
 PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX* amx, const char* name, cell* params, cell* retval)
 {
+	if (sampnode::js_calling_public)
+		return true;
 	auto iter = sampnode::events.find(name);
 	if (iter != sampnode::events.end())
 		iter->second->call(amx, params, retval);
