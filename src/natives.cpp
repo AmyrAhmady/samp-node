@@ -73,7 +73,6 @@ namespace sampnode
 				params[j++] = static_cast<void*>(&param_value[i]);
 				k++;
 				sprintf(str_format, "%si", str_format);
-				L_INFO << "Hi";
 			}
 			break;
 			case 'f':
