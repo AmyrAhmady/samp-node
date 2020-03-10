@@ -97,6 +97,7 @@ namespace sampnode
 	{
 		v8::Isolate* isolate = info.GetIsolate();
 		v8::TryCatch eh(isolate);
+		int returnValue = 0;
 
 		if (info.Length() > 0)
 		{
@@ -270,7 +271,7 @@ namespace sampnode
 				}
 
 				js_calling_public = true;
-				amx_Exec(amx.second->get(), NULL, callback);
+				amx_Exec(amx.second->get(), &returnValue, callback);
 				js_calling_public = false;
 
 				while (numberOfStrings)
@@ -280,5 +281,6 @@ namespace sampnode
 				}
 			}
 		}
+		info.GetReturnValue().Set(returnValue);
 	}
 }
