@@ -8,6 +8,7 @@
 #include "amx/amx.h"
 #include "events.hpp"
 #include "utils.hpp"
+#include "logger.hpp"
 
 namespace sampnode
 {
@@ -121,6 +122,32 @@ namespace sampnode
 		}
 	}
 
+	void event::fire(const v8::FunctionCallbackInfo<v8::Value>& info)
+	{
+		if (info.Length() > 0)
+		{
+			v8::HandleScope scope(info.GetIsolate());
+			if (!info[0]->IsString())
+				return;
+
+			std::string& eventName = utils::js_to_string(info[0]);
+
+			if (events.find(eventName) == events.end()) return;
+			event* _event = events[eventName];
+
+			v8::Local<v8::Value>* argv = NULL;
+			unsigned int argc = info.Length() - 1;
+			argv = new v8::Local<v8::Value>[argc];
+
+			for (int i = 0; i < argc; i++)
+			{
+				argv[i] = info[i + 1];
+			}
+
+			_event->call(argv, argc);
+		}
+	}
+
 	event::event(const std::string& eventName, const std::string& param_types)
 	{
 		name = eventName;
@@ -175,6 +202,32 @@ namespace sampnode
 		functionList.clear();
 	}
 
+	void event::call(v8::Local<v8::Value>* args, int argCount)
+	{
+		for (auto& listener : functionList)
+		{
+			v8::Isolate* isolate = listener.isolate;
+			v8::Locker v8Locker(listener.isolate);
+			v8::HandleScope hs(listener.isolate);
+			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
+			v8::Context::Scope cs(ctx);
+			v8::TryCatch eh(listener.isolate);
+
+			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
+			function->Call(listener.context.Get(listener.isolate)->Global(), argCount, args);
+
+			if (argCount > 0) delete[] args;
+
+			if (eh.HasCaught())
+			{
+				v8::String::Utf8Value str(listener.isolate, eh.Exception());
+				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
+
+				L_ERROR << "Event handling function in resource: " << *str <<"\nstack:\n" << *stack << "\n";
+			}
+		}
+	}
+
 	void event::call(AMX* amx, cell* params, cell* retval)
 	{
 		for (auto& listener : functionList)
@@ -188,7 +241,7 @@ namespace sampnode
 
 			v8::Local<v8::Value>* argv = NULL;
 			unsigned int argc = paramTypes.length();
-			argv = new v8::Local<v8::Value>[argc];;
+			argv = new v8::Local<v8::Value>[argc];
 			size_t param_count = params[0] / sizeof(cell);
 			for (unsigned int i = 0; i < argc; i++)
 			{
@@ -243,7 +296,7 @@ namespace sampnode
 				v8::String::Utf8Value str(listener.isolate, eh.Exception());
 				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
 
-				printf("[samp-node] event handling function in resource: %s\nstack:\n%s\n", *str, *stack);
+				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 			}
 		}
 	}

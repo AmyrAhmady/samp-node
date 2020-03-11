@@ -47,6 +47,7 @@ namespace sampnode
 
 		static void on(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void remove_listener(const v8::FunctionCallbackInfo<v8::Value>& info);
+		static void fire(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static void register_event(const v8::FunctionCallbackInfo<v8::Value>& info);
 		static bool register_event(const std::string& eventName, const std::string& param_types);
 
@@ -58,6 +59,7 @@ namespace sampnode
 		void remove(const v8::Local<v8::Function>& function);
 		void remove_all();
 		void call(AMX* amx, cell* params, cell* retval);
+		void call(v8::Local<v8::Value>* args, int argCount);
 
 	private:
 		std::string name;
