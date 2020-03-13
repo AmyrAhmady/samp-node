@@ -18,6 +18,7 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "registerEvent", sampnode::event::register_event },
 	{ "callNative", sampnode::native::call_pawn_native },
 	{ "callPublic", sampnode::callback::call },
+	{ "callPublicFloat", sampnode::callback::call_float },
 };
 
 namespace sampnode
