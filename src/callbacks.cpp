@@ -81,7 +81,6 @@ namespace sampnode
 		for (auto& callback : sampCallbacks)
 		{
 			event::register_event(callback.name, callback.param_types);
-			L_DEBUG << "registered samp callback '" << callback.name << "' in event pool";
 		}
 	}
 
