@@ -34,16 +34,33 @@ static node::IsolateData* GetNodeIsolate()
 
 namespace sampnode
 {
-	v8::UniquePersistent<v8::Context> m_context; 
+	v8::UniquePersistent<v8::Context> m_context;
 	node::Environment* m_nodeEnvironment;
-	bool node_init()
+	bool node_init(const std::string& node_flags)
 	{
-		const char* argvv[] = { "node", "./index.js" };
-		int argc = 2;
-		char** argv = uv_setup_args(2, (char**)argvv);
+		std::vector<const char*> argvv;
+		argvv.push_back("node");
+
+		std::vector<std::string> vflags = utils::split(node_flags, ' ');
+
+		for (auto& flag : vflags)
+		{
+			argvv.push_back(flag.c_str());
+		}
+
+		argvv.push_back("./index.js");
+
+		int argc = argvv.size();
+
+		for (int i = 0; i < argc; i++)
+		{
+			L_DEBUG << "node flag: " << argvv[i];
+		}
+
+		char** argv = uv_setup_args(argc, (char**)argvv.data());
 		int exec_argc;
 		const char** exec_argv;
-		g_v8.Initialize(&argc, const_cast<const char**>(argv), &exec_argc, &exec_argv);
+		g_v8.Initialize(&argc, argvv.data(), &exec_argc, &exec_argv);
 
 		v8::Locker locker(GetV8Isolate());
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
@@ -57,7 +74,12 @@ namespace sampnode
 		m_context.Reset(GetV8Isolate(), context);
 		v8::Context::Scope scope(context);
 
-		auto env = node::CreateEnvironment(GetNodeIsolate(), context, 2, argv, exec_argc, exec_argv);
+		const char* execArgv[] =
+		{
+			"--start-node"
+		};
+
+		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, argv, std::size(execArgv), execArgv);
 		node::LoadEnvironment(env);
 		m_nodeEnvironment = env;
 

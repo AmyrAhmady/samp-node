@@ -1,5 +1,7 @@
 #pragma once
 #include <vector>
+#include <string>
+#include <sstream>
 #include <utility>
 #include "v8.h"
 
@@ -24,4 +26,17 @@ namespace utils {
 		str = check_string_conversion(jsString);
 		return std::string(str);
 	}
+
+	inline std::vector<std::string> split(const std::string& s, char delimiter)
+	{
+		std::vector<std::string> tokens;
+		std::string token;
+		std::istringstream tokenStream(s);
+		while (std::getline(tokenStream, token, delimiter))
+		{
+			tokens.push_back(token);
+		}
+		return tokens;
+	}
+
 }

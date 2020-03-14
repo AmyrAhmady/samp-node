@@ -11,7 +11,7 @@ namespace sampnode
 		REFERENCE_ERROR
 	};
 
-	bool node_init();
+	bool node_init(const std::string& node_flags);
 	void node_tick();
 	void node_stop();
 	v8::Local<v8::Value> node_execute_code(const std::string& source, const std::string& name);

@@ -1,4 +1,6 @@
 #include <iostream>
+#include <fstream>
+#include <algorithm>
 #include "callbacks.hpp"
 #include "events.hpp"
 #include "amxhandler.hpp"
@@ -30,9 +32,38 @@ PLUGIN_EXPORT unsigned int PLUGIN_CALL Supports()
 
 PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 {
+	///////////////////////////////////////////////////////////////////////////////////////////////
+	// this piece of code is taken from maddinat0r's samp-discord-connector
+	// https://github.com/maddinat0r/samp-discord-connector/blob/master/src/SampConfigReader.cpp
+	std::string node_flags;
+	std::vector<std::string> file_content;
+	std::ifstream config_file("server.cfg");
+	while (config_file.good())
+	{
+		std::string line_buffer;
+		std::getline(config_file, line_buffer);
+
+		size_t cr_pos = line_buffer.find_first_of("\r\n");
+		if (cr_pos != std::string::npos)
+			line_buffer.erase(cr_pos);
+
+		file_content.push_back(std::move(line_buffer));
+	}
+
+	std::string varname = "node_flags ";
+	for (auto& i : file_content)
+	{
+		if (i.find(varname) == 0)
+		{
+			node_flags = i.substr(varname.length());
+			break;
+		}
+	}
+	///////////////////////////////////////////////////////////////////////////////////////////////
+
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
-	sampnode::node_init();
+	sampnode::node_init(node_flags);
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	return true;
 }
