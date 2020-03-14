@@ -74,12 +74,7 @@ namespace sampnode
 		m_context.Reset(GetV8Isolate(), context);
 		v8::Context::Scope scope(context);
 
-		const char* execArgv[] =
-		{
-			"--start-node"
-		};
-
-		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, argv, std::size(execArgv), execArgv);
+		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, argv, 0, nullptr);
 		node::LoadEnvironment(env);
 		m_nodeEnvironment = env;
 
