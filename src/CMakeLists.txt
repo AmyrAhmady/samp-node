@@ -65,26 +65,24 @@ add_samp_plugin(${PROJECT_NAME}
 )
 
 if (WIN32)
-    set(LIBRARIES v8_libbase v8_libplatform node shlwapi dbghelp winmm)
-
-	add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-			${NODE_PATH}/${NODE_FILE} ${PROJECT_SOURCE_DIR}/test/${NODE_FILE})	
+    set(LIBRARIES v8_libbase v8_libplatform node shlwapi dbghelp winmm)	
 else()
 	find_library(NODE_LIB
 		NAMES ${NODE_FILE}
-		HINTS ${NODE_PATH})	
+		HINTS ${NODE_PATH}
+	)	
 
-	set(LIBRARIES ${NODE_LIB} pthread dl m)	
-
-	add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy
-			${NODE_PATH}/${NODE_FILE} ${PROJECT_SOURCE_DIR}/test/${NODE_FILE})	
+	set(LIBRARIES ${NODE_LIB} pthread dl m)		
 	
 	if(UNIX)
 		target_sources(${PROJECT_NAME} PUBLIC ${SAMPSDK_DIR}/amx/getch.c)
 	endif()
 endif()
+
+add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy
+	${NODE_PATH}/${NODE_FILE} ${PROJECT_SOURCE_DIR}/test/${NODE_FILE}
+)
 
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 
