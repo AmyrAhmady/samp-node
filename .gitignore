@@ -6,6 +6,8 @@ build/
 .vs/
 Release/*.*
 Debug/*.*
-test/
+test/*
 dependencies/
 releases/
+
+!test/samp.json

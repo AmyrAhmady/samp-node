@@ -11,4 +11,4 @@ services:
       - "7777:7777/udp"
     volumes:
       - ./test/:/samp
-    container_name: samp
+    container_name: node-samp
