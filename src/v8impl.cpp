@@ -54,7 +54,7 @@ void V8ScriptGlobals::Initialize(int* argc,
 	m_isolate->SetCaptureStackTraceForUncaughtExceptions(true);
 
 	// initialize Node.js
-	v8::Locker locker(m_isolate);
+	//v8::Locker locker(m_isolate);
 	v8::Isolate::Scope isolateScope(m_isolate);
 	v8::HandleScope handle_scope(m_isolate);
 
@@ -78,9 +78,9 @@ void V8ScriptGlobals::Initialize(int* argc,
 
 	node::Init(argc, argv, &eac, &eav);
 
-	UvLoopHolder* _loop = new UvLoopHolder("dope");
+	m_loop = std::make_unique<UvLoopHolder>("dope");
 
-	m_nodeData = node::CreateIsolateData(m_isolate, _loop->GetLoop(), platform, (node::ArrayBufferAllocator*)m_arrayBufferAllocator.get());
+	m_nodeData = node::CreateIsolateData(m_isolate, m_loop->GetLoop(), platform, (node::ArrayBufferAllocator*)m_arrayBufferAllocator.get());
 
 }
 
@@ -90,29 +90,18 @@ V8ScriptGlobals::~V8ScriptGlobals()
 }
 
 UvLoopHolder::UvLoopHolder(const std::string& loopTag)
-	: m_shouldExit(false), m_loopTag(loopTag)
+	: m_loopTag(loopTag)
 {
 
 	uv_loop_init(&m_loop);
 
 	m_loop.data = this;
 
-	m_thread = std::thread([=]()
-		{
-			while (!m_shouldExit)
-			{
-				uv_run(&m_loop, UV_RUN_DEFAULT);
-				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			}
-
-			uv_loop_close(&m_loop);
-		});
+	uv_run(&m_loop, UV_RUN_NOWAIT);
 }
 
 UvLoopHolder::~UvLoopHolder()
 {
-	m_shouldExit = true;
-
 	uv_stop(&m_loop);
 
 	uv_async_t async;
@@ -123,11 +112,6 @@ UvLoopHolder::~UvLoopHolder()
 		});
 
 	uv_async_send(&async);
-
-	if (m_thread.joinable())
-	{
-		m_thread.join();
-	}
 
 	uv_close(reinterpret_cast<uv_handle_t*>(&async), nullptr);
 }

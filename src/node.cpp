@@ -62,7 +62,6 @@ namespace sampnode
 		const char** exec_argv;
 		g_v8.Initialize(&argc, argvv.data(), &exec_argc, &exec_argv);
 
-		v8::Locker locker(GetV8Isolate());
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
 		v8::HandleScope handleScope(GetV8Isolate());
 
@@ -83,7 +82,8 @@ namespace sampnode
 
 	void node_tick()
 	{
-		v8::platform::PumpMessageLoop(GetV8Platform(), GetV8Isolate());
+		//v8::platform::PumpMessageLoop(GetV8Platform(), GetV8Isolate());
+		uv_run(g_v8.GetUVLoop()->GetLoop(), UV_RUN_NOWAIT);
 	}
 
 	void node_stop()
@@ -95,7 +95,7 @@ namespace sampnode
 	v8::Local<v8::Value> node_execute_code(const std::string& source, const std::string& name)
 	{
 		v8::Isolate* isolate = GetV8Isolate();
-		v8::Locker v8Locker(isolate);
+		//v8::Locker v8Locker(isolate);
 		v8::Isolate::Scope isolate_scope(isolate);
 		v8::HandleScope hs(isolate);
 		v8::EscapableHandleScope handle_scope(isolate);

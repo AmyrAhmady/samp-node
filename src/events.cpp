@@ -207,7 +207,7 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			v8::Locker v8Locker(listener.isolate);
+			//v8::Locker v8Locker(listener.isolate);
 			v8::HandleScope hs(listener.isolate);
 			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
 			v8::Context::Scope cs(ctx);
@@ -233,7 +233,7 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			v8::Locker v8Locker(listener.isolate);
+			//v8::Locker v8Locker(listener.isolate);
 			v8::HandleScope hs(listener.isolate);
 			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
 			v8::Context::Scope cs(ctx);
