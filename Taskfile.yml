@@ -17,7 +17,7 @@ tasks:
     cmds:
       - mkdir -p releases/    
       - docker build -f Dockerfile -t amyrahmady/samp-node-build-linux .
-      - docker run -v=$(pwd)/test/plugins:/work/test/plugins -v=$(pwd)/releases:/work/releases amyrahmady/samp-node-build-linux
+      - docker run -v=$(pwd)/test:/work/test -v=$(pwd)/releases:/work/releases amyrahmady/samp-node-build-linux
 
   build:windows:
     dir: build

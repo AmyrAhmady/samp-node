@@ -14,6 +14,9 @@
       "name": "samp-node-.+-linux.tar.gz",
       "archive": true,
       "platform": "linux",
+      "files": {
+        "libnode.so.64": "libnode.so.64"
+      },
       "plugins": [
         "samp-node.so"
       ],
@@ -24,7 +27,7 @@
     {
       "name": "samp-node-.+-windows.zip",
       "archive": true,
-      "platform": "windows",
+      "platform": "windows",     
       "plugins": [
         "samp-node.dll"
       ],      
