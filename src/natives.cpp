@@ -1,5 +1,9 @@
 #include <string>
-#include <amx/amx2.h>
+#ifndef WIN32
+#include <cstring>
+#endif
+
+#include "amx/amx2.h"
 #include "common.hpp"
 #include "v8.h"
 #include "node.hpp"
