@@ -34,8 +34,8 @@ namespace sampnode
 			}
 			else
 			{
-				std::string& eventName = utils::js_to_string(info[0]);
-				std::string& paramTypes = utils::js_to_string(info[1]);
+				std::string eventName = utils::js_to_string(info[0]);
+				std::string paramTypes = utils::js_to_string(info[1]);
 				if (events.find(eventName) != events.end())
 				{
 					info.GetReturnValue().Set(false);
@@ -56,7 +56,7 @@ namespace sampnode
 				return;
 
 			int funcArgIndex = info.Length() - 1;
-			std::string& eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 			event* _event = events[eventName];
@@ -77,7 +77,7 @@ namespace sampnode
 			if (!info[0]->IsString())
 				return;
 
-			std::string& eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 
@@ -130,7 +130,7 @@ namespace sampnode
 			if (!info[0]->IsString())
 				return;
 
-			std::string& eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 			event* _event = events[eventName];

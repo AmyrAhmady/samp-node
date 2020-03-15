@@ -1,5 +1,9 @@
 #include <vector>
 #include <string>
+#ifndef WIN32
+#include <cstring>
+#endif
+
 #include "v8.h"
 #include "logger.hpp"
 #include "node.hpp"
