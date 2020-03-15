@@ -90,8 +90,8 @@ namespace sampnode
 					v8::Local<v8::Array> funcArray = v8::Local<v8::Array>::Cast(info[1]);
 					for (unsigned int i = 0; i < funcArray->Length(); i++)
 					{
-						v8::Local<v8::Value>& element = funcArray->Get(i);
-						v8::Local<v8::Function>& function = element.As<v8::Function>();
+						const v8::Local<v8::Value>& element = funcArray->Get(i);
+						const v8::Local<v8::Function>& function = element.As<v8::Function>();
 						for (auto& element : _event->functionList) {
 							if (element.function.Get(info.GetIsolate()) == function)
 							{
