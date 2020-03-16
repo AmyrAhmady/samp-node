@@ -6,40 +6,37 @@ env:
 
 jobs:
   build:
-    name: ${ { matrix.name } }
-    runs-on: ${ { matrix.os } }
+    name: Build
     strategy:
       matrix:
         os: [windows-latest, ubuntu-16.04]
-        name: "windows"
-        extension: "zip"
         include:
           - os: windows-latest
             name: "windows"
             extension: "zip"
-
           - os: ubuntu-16.04
             name: "linux"
-            extension: "tar.gz"
-
+            extension: "tar.gz"                
+    runs-on: ${ { matrix.os } }
     steps:
-      - uses: actions/checkout@v1
-
+      - uses: actions/checkout@v1   
       - name: configure
+        shell: bash
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
-
       - name: build
+        shell: bash
         run: cmake --build . --config $ENV{BUILD_TYPE}
+      - name: package
+        shell: bash
+        run: cpack && mv cpack/*.${{ matrix.extension }} ../releases   
           
   release:
     if: contains(github.ref, 'tags/v')
+    name: Release
     runs-on: ubuntu-latest
     needs: build    
 
     steps:
-      - name: package
-        run: cpack && mv cpack/*.${{ matrix.extension }} ../releases
-
       - name: release
         id: create_release
         uses: actions/create-release@v1.0.0
