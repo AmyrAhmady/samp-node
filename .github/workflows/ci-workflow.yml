@@ -9,9 +9,8 @@ jobs:
     name: ${ { matrix.name } }
     runs-on: ${ { matrix.os } }
     strategy:
-      fail-fast: false
       matrix:
-        os: [windows-latest, ubuntu-16.04],
+        os: [windows-latest, ubuntu-16.04]
         name: "windows",
         extension: "zip",
         include:
