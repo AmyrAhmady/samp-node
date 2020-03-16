@@ -7,7 +7,8 @@ env:
 jobs:
   windows:
     runs-on: windows-2016
-    fail-fast: false
+    strategy:
+      fail-fast: false
     steps:
       - uses: actions/checkout@v1
         with:
@@ -23,7 +24,8 @@ jobs:
           
   linux:
     runs-on: ubuntu-latest
-    fail-fast: false
+    strategy:
+      fail-fast: false
     steps:
       - uses: actions/checkout@v1
         with:
