@@ -7,6 +7,7 @@ env:
 jobs:
   windows:
     runs-on: windows-2016
+    fail-fast: false
     steps:
       - uses: actions/checkout@v1
         with:
@@ -16,25 +17,21 @@ jobs:
         run: |
           mkdir build \
           && cd build \
-          && cmake .. -DCMAKE_BUILD_TYPE=$BUILD_TYPE -A Win32 \
+          && cmake .. -A Win32 \
           && cmake --build . --config $BUILD_TYPE \
           && cpack && mv cpack/*.zip ../releases  
           
   linux:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
+    fail-fast: false
     steps:
       - uses: actions/checkout@v1
         with:
           submodules: 'true'
       - name: Build
-        shell: bash
         run: |
-          apt install -y libc6-dev-i386
-          mkdir build \
-          && cd build \
-          && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} \
-          && cmake --build . --config $ENV{BUILD_TYPE} \
-          && cpack && mv cpack/*.zip ../releases
+          docker build -f Dockerfile -t amyrahmady/samp-node-build-linux . && \
+          docker run -v=$(pwd)/test:/work/test -v=$(pwd)/releases:/work/releases amyrahmady/samp-node-build-linux
 
   release:
     name: Release
