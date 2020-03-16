@@ -17,6 +17,10 @@ project(samp-node VERSION ${PLUGIN_VERSION})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/test/plugins)
 set(CMAKE_INSTALL_PREFIX ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 
+set(CMAKE_BUILD_WITH_INSTALL_RPATH true)
+set(CMAKE_INSTALL_RPATH "${PROJECT_SOURCE_DIR}/deps")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH true)
+
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/deps/cmake-modules")
 
 if(MSVC)
@@ -31,10 +35,11 @@ endif()
 # -
 
 if(UNIX)
-	set(CMAKE_CXX_FLAGS "-m32 -std=c++14")
-	set(CMAKE_C_FLAGS "-m32")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32 -std=c++14")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
 	set_property(GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS OFF)
 
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".a;.so;.so.64")
 	add_link_options(
 		"-static-libgcc"
 		"-static-libstdc++"
