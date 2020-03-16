@@ -26,6 +26,11 @@ jobs:
       - name: configure
         shell: bash
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
+        if: matrix.runs-on == 'ubuntu-16.04'
+      - name: configure
+        shell: bash
+        run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} -A Win32
+        if: matrix.runs-on == 'windows-latest'          
       - name: build
         shell: bash
         run: cd build/ && cmake --build . --config $ENV{BUILD_TYPE}
