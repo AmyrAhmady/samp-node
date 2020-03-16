@@ -6,7 +6,7 @@ env:
 
 jobs:
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2016
     steps:
       - uses: actions/checkout@v1
         with:
@@ -29,6 +29,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
+          apt install -y libc6-dev-i386
           mkdir build \
           && cd build \
           && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} \
