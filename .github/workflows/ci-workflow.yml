@@ -12,16 +12,18 @@ jobs:
       fail-fast: false
       matrix:
         config:
-        - {
-            name: "windows", extension: "zip",
-            os: windows-latest
-          }
-        - {
-            name: "linux", extension: "tar.gz",
-            os: ubuntu-16.04
-          }
+          - {
+              name: "windows", extension: "zip",
+              os: windows-latest
+            }
+          - {
+              name: "linux", extension: "tar.gz",
+              os: ubuntu-16.04
+            }
 
     steps:
+      - uses: actions/checkout@v1
+
       - name: configure
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
 
