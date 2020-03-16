@@ -27,10 +27,10 @@ jobs:
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
       - name: build
         shell: bash
-        run: cmake --build . --config $ENV{BUILD_TYPE}
+        run: cd build/ && cmake --build . --config $ENV{BUILD_TYPE}
       - name: package
         shell: bash
-        run: cpack && mv cpack/*.${{ matrix.extension }} ../releases   
+        run: cd build && cpack && mv cpack/*.${{ matrix.extension }} ../releases   
           
   release:
     if: contains(github.ref, 'tags/v')
