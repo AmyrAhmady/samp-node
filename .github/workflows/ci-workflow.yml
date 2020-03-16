@@ -28,7 +28,7 @@ jobs:
         run: |
           mkdir build \
           && cd build \
-          && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} -A Win32 \
+          && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} \
           && cmake --build . --config $ENV{BUILD_TYPE} \
           && cpack && mv cpack/*.${{ matrix.extension }} ../releases                
 
