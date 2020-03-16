@@ -16,7 +16,7 @@ tasks:
   build:linux:
     cmds:
       - mkdir -p releases/    
-      - docker build -f Dockerfile -t amyrahmady/samp-node-build-linux .
+      - docker build -f Dockerfile -t amyrahmady/samp-node-build-linux . --build-arg PLUGIN_VERSION={{ .PLUGIN_VERSION }}
       - docker run -v=$(pwd)/test:/work/test -v=$(pwd)/releases:/work/releases amyrahmady/samp-node-build-linux
 
   build:windows:
@@ -24,7 +24,7 @@ tasks:
     cmds:    
       - mkdir -p ../releases
       - rm -rf *
-      - cmake .. -A Win32
+      - cmake .. -DPLUGIN_VERSION={{ .PLUGIN_VERSION }} -A Win32 
       - cmake --build . --config Release
       - cpack && mv cpack/*.zip ../releases
 
