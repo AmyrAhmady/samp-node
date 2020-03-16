@@ -13,12 +13,12 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-16.04],
         include:
-          - os: windows-latest
+          - os: windows-latest,
             name: "windows",
             extension: "zip"
 
-          - os: ubuntu-16.04
-            name: "linux"
+          - os: ubuntu-16.04,
+            name: "linux",
             extension: "tar.gz"
 
     steps:
