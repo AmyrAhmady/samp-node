@@ -19,7 +19,9 @@ jobs:
             extension: "tar.gz"                
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v1   
+      - uses: actions/checkout@v1
+        with:
+          submodules: 'true'
       - name: configure
         shell: bash
         run: mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE}
