@@ -21,7 +21,7 @@ jobs:
           && cpack && mv cpack/*.zip ../releases  
           
   linux:
-    runs-on: windows-latest
+    runs-on: ubuntu-16.04
     steps:
       - uses: actions/checkout@v1
         with:
