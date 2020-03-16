@@ -6,20 +6,20 @@ env:
 
 jobs:
   build:
-    name: ${ { matrix.config.name } }
-    runs-on: ${ { matrix.config.os } }
+    name: ${ { matrix.name } }
+    runs-on: ${ { matrix.os } }
     strategy:
       fail-fast: false
       matrix:
-        config:
-          - {
-              name: "windows", extension: "zip",
-              os: windows-latest
-            }
-          - {
-              name: "linux", extension: "tar.gz",
-              os: ubuntu-16.04
-            }
+        os: [windows-latest, ubuntu-16.04],
+        include:
+          - os: windows-latest
+            name: "windows",
+            extension: "zip"
+
+          - os: ubuntu-16.04
+            name: "linux"
+            extension: "tar.gz"
 
     steps:
       - uses: actions/checkout@v1
@@ -37,7 +37,7 @@ jobs:
 
     steps:
       - name: package
-        run: cpack && mv cpack/*.${{ matrix.config.extension }} ../releases
+        run: cpack && mv cpack/*.${{ matrix.extension }} ../releases
 
       - name: release
         id: create_release
@@ -53,4 +53,4 @@ jobs:
       - uses: actions/upload-artifact@v1
         with:
           path: releases/
-          name: samp-node-${{ github.ref }}-${{ matrix.config.name }}.${{ matrix.config.extension }}
+          name: samp-node-${{ github.ref }}-${{ matrix.name }}.${{ matrix.extension }}
