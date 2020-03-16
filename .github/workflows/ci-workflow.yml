@@ -33,10 +33,10 @@ jobs:
         if: matrix.runs-on == 'windows-latest'          
       - name: build
         shell: bash
-        run: cd build/ && cmake --build . --config $ENV{BUILD_TYPE}
+        run: cmake --build . --config $ENV{BUILD_TYPE}
       - name: package
         shell: bash
-        run: cd build && cpack && mv cpack/*.${{ matrix.extension }} ../releases   
+        run: cpack && mv cpack/*.${{ matrix.extension }} ../releases   
           
   release:
     if: contains(github.ref, 'tags/v')
