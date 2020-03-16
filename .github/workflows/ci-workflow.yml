@@ -5,20 +5,23 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    name: Build
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest, ubuntu-16.04]
-        include:
-          - os: windows-latest
-            name: "windows"
-            extension: "zip"
-          - os: ubuntu-16.04
-            name: "linux"
-            extension: "tar.gz"                
-    runs-on: ${{ matrix.os }}
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: 'true'
+      - name: Build
+        shell: bash
+        run: |
+          mkdir build \
+          && cd build \
+          && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} -A Win32 \
+          && cmake --build . --config $ENV{BUILD_TYPE} \
+          && cpack && mv cpack/*.zip ../releases  
+          
+  linux:
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v1
         with:
@@ -30,12 +33,12 @@ jobs:
           && cd build \
           && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} \
           && cmake --build . --config $ENV{BUILD_TYPE} \
-          && cpack && mv cpack/*.${{ matrix.extension }} ../releases                
+          && cpack && mv cpack/*.zip ../releases
 
   release:
     name: Release
     runs-on: ubuntu-latest
-    needs: build
+    needs: [windows, linux]
     steps:
       - name: Publish
         uses: softprops/action-gh-release@v1
