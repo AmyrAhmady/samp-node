@@ -25,22 +25,22 @@ jobs:
           submodules: 'true'
       - name: Build (Windows)
         shell: bash
+        if: matrix.runs-on == 'windows-latest'
         run: |
           mkdir build \
           && cd build \
           && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} -A Win32 \
-          && cmake --build . --config $ENV{BUILD_TYPE}
+          && cmake --build . --config $ENV{BUILD_TYPE} \
           && cpack && mv cpack/*.${{ matrix.extension }} ../releases 
-        if: matrix.runs-on == 'windows-latest'
       - name: Build (linux)
         shell: bash
+        if: matrix.runs-on == 'ubuntu-16.04'
         run: |
           mkdir build \
           && cd build \
           && cmake .. -DCMAKE_BUILD_TYPE=$ENV{BUILD_TYPE} \
-          && cmake --build . --config $ENV{BUILD_TYPE}
-          && cpack && mv cpack/*.${{ matrix.extension }} ../releases 
-        if: matrix.runs-on == 'ubuntu-16.04'                
+          && cmake --build . --config $ENV{BUILD_TYPE} \
+          && cpack && mv cpack/*.${{ matrix.extension }} ../releases               
 
   release:
     name: Release
