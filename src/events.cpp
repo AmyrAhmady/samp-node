@@ -12,7 +12,6 @@
 
 namespace sampnode
 {
-
 	eventsContainer events = eventsContainer();
 
 	bool event::register_event(const std::string& eventName, const std::string& param_types)
@@ -90,9 +89,9 @@ namespace sampnode
 					v8::Local<v8::Array> funcArray = v8::Local<v8::Array>::Cast(info[1]);
 					for (unsigned int i = 0; i < funcArray->Length(); i++)
 					{
-						const v8::Local<v8::Value>& element = funcArray->Get(i);
-						const v8::Local<v8::Function>& function = element.As<v8::Function>();
-						for (auto& element : _event->functionList) {
+						const v8::Local<v8::Function>& function = funcArray->Get(i).As<v8::Function>();
+						for (auto& element : _event->functionList) 
+						{
 							if (element.function.Get(info.GetIsolate()) == function)
 							{
 								v8::Isolate* isolate = info.GetIsolate();
