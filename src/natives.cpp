@@ -56,9 +56,6 @@ namespace sampnode
 		void* params[32];
 		cell param_value[20];
 		int param_size[32];
-		std::vector<cell*> param_cell;
-		std::vector<char*> param_str;
-		std::vector<const char*> param_str2;
 		int j = 0;
 		int k = 2;
 		int vars = 0;
@@ -79,6 +76,7 @@ namespace sampnode
 				sprintf(str_format, "%si", str_format);
 			}
 			break;
+
 			case 'f':
 			{
 				float val = 0.0;
@@ -90,6 +88,7 @@ namespace sampnode
 				sprintf(str_format, "%sf", str_format);
 			}
 			break;
+
 			case 's':
 			{
 				v8::String::Utf8Value _str(isolate, args[k]);
@@ -108,6 +107,7 @@ namespace sampnode
 				strs++;
 			}
 			break;
+
 			// Array of integers
 			case 'a':
 			{
@@ -118,7 +118,6 @@ namespace sampnode
 					return;
 				}
 
-
 				v8::Local<v8::Array> a = v8::Local<v8::Array>::Cast(args[k++]);
 				size_t size = a->Length();
 
@@ -128,12 +127,13 @@ namespace sampnode
 				{
 					value[b] = a->Get(b)->Int32Value();
 				}
-				sprintf(str_format, "%sa[%i]", str_format, size);
+
+				sprintf(str_format, "%sa[%i]", str_format, static_cast<int>(size));
 				params[j++] = static_cast<void*>(value);
 				strs++;
-
 			}
 			break;
+
 			// Array of floats
 			case 'v':
 			{
@@ -160,6 +160,7 @@ namespace sampnode
 
 			}
 			break;
+
 			case 'F':
 			case 'I':
 			{
@@ -200,6 +201,7 @@ namespace sampnode
 				vars++;
 			}
 			break;
+			
 			case 'S':
 			{
 
@@ -222,14 +224,17 @@ namespace sampnode
 
 			}
 		}
-		int retval = sampgdk::InvokeNativeArray(native, str_format, params);
+
+		int32_t retval = sampgdk::InvokeNativeArray(native, str_format, params);
 
 		if (vars > 0 || strs > 0)
 		{
-			v8::Local<v8::Array> arr = v8::Array::New(args.GetIsolate(), vars);
 			j = 0;
 			vars = 0;
 			int sk = 0;
+
+			v8::Local<v8::Array> arr = v8::Array::New(args.GetIsolate(), vars);
+
 			for (unsigned int i = 0; i < len; i++)
 			{
 				switch (format[i])
