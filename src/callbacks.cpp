@@ -274,7 +274,7 @@ namespace sampnode
 				}
 
 				js_calling_public = true;
-				amx_Exec(amx.second->get(), &returnValue, callback);
+				amx_Exec(amx.second->get(), reinterpret_cast<cell*>(&returnValue), callback);
 				js_calling_public = false;
 
 				while (numberOfStrings)
@@ -465,7 +465,7 @@ namespace sampnode
 				}
 
 				js_calling_public = true;
-				amx_Exec(amx.second->get(), &returnValue, callback);
+				amx_Exec(amx.second->get(), reinterpret_cast<cell*>(&returnValue), callback);
 				js_calling_public = false;
 
 				while (numberOfStrings)
