@@ -324,7 +324,7 @@ namespace sampnode
 			v8::String::Utf8Value str(isolate, eh.Exception());
 			v8::String::Utf8Value stack(isolate, eh.StackTrace(args.GetIsolate()->GetCallingContext()).ToLocalChecked());
 
-			printf("[samp-node] event handling function in resource: %s\nstack:\n%s\n", *str, *stack);
+			L_ERROR << "[samp-node] event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 		}
 	}
 }
