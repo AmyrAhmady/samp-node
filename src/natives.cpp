@@ -244,7 +244,7 @@ namespace sampnode
 				case 'a':
 				case 'v':
 				{
-					delete[] params[j++];
+					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
 				case 'A':
@@ -258,7 +258,7 @@ namespace sampnode
 					}
 
 					arr->Set(vars++, rArr);
-					delete[] params[j++];
+					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
 
@@ -272,7 +272,7 @@ namespace sampnode
 						rArr->Set(c, v8::Number::New(args.GetIsolate(), amx_ctof(param_array[c])));
 					}
 					arr->Set(vars++, rArr);
-					delete[] params[j++];
+					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
 				case 'I':
@@ -291,13 +291,13 @@ namespace sampnode
 				case 'S':
 				{
 
-					size_t len = param_size[j];
-					char* str = static_cast<char*>(params[j]);
-					str[len - 1] = '\0';
+					size_t s_len = param_size[j];
+					char* s_str = static_cast<char*>(params[j]);
+					s_str[s_len - 1] = '\0';
 
-					arr->Set(vars++, v8::String::NewFromUtf8(args.GetIsolate(), str));
+					arr->Set(vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str));
 					i++;
-					delete[] params[j++];
+					delete[] static_cast<char*>(params[j++]);
 
 				}
 				break;

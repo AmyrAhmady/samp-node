@@ -10,7 +10,6 @@ namespace sampnode
 	class event
 	{
 	public:
-
 		struct EventListener_t
 		{
 			v8::Isolate* isolate;

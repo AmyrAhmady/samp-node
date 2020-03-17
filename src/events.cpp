@@ -148,10 +148,10 @@ namespace sampnode
 	}
 
 	event::event(const std::string& eventName, const std::string& param_types)
+		: name(eventName),
+		  paramTypes(param_types),
+		  functionList(std::vector<EventListener_t>())
 	{
-		name = eventName;
-		paramTypes = param_types;
-		functionList = std::vector<EventListener_t>();
 	}
 
 	event::event()
@@ -165,12 +165,18 @@ namespace sampnode
 	}
 
 	void event::append(const v8::Local<v8::Function>& function)
-	{
+	{		
 		v8::Isolate* isolate = function->GetIsolate();
-		for (auto& element : functionList)
+	
+		bool result = std::any_of(functionList.cbegin(), functionList.cend(), 
+			[&function, &isolate](const EventListener_t &listener) 
 		{
-			if (element.function.Get(isolate) == function)
-				return;
+			return listener.function.Get(isolate) == function;
+		});
+
+		if(result)
+		{
+			return;
 		}
 
 		functionList.push_back(
@@ -180,8 +186,6 @@ namespace sampnode
 				function
 			)
 		);
-
-		//listener.Get(isolate)->Call(isolate->GetCurrentContext()->Global(), 0, NULL);
 	}
 
 	void event::remove(const v8::Local<v8::Function>& function)
@@ -253,14 +257,14 @@ namespace sampnode
 					char* sval;
 					if (amx_GetAddr(amx, params[i + 1], &maddr) != AMX_ERR_NONE)
 					{
-						printf("Can't get string address: %s", name.c_str());
+						L_ERROR << "Can't get string address: " << name.c_str();
 						return;
 					}
 					amx_StrLen(maddr, &len);
 					sval = new char[len + 1];
 					if (amx_GetString(sval, maddr, 0, len + 1) != AMX_ERR_NONE)
 					{
-						printf("Can't get string: %s", name.c_str());
+						L_ERROR << "Can't get string address: " << name.c_str();
 						return;
 					}
 					argv[i] = v8::String::NewFromUtf8(isolate, sval);

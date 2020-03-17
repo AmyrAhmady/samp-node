@@ -211,7 +211,7 @@ namespace sampnode
 			std::vector<cell> amx_addr;
 			for (int i = 0; i < numberOfStrings; i++)
 			{
-				amx_addr.push_back(NULL);
+				amx_addr.push_back(0);
 			}
 			numberOfStrings = 0;
 
@@ -246,15 +246,15 @@ namespace sampnode
 					case 's':
 					{
 						char* string = static_cast<char*>(params[i]);
-						if (string != NULL && strlen(string) > 0)
+						if (string != 0 && strlen(string) > 0)
 						{
-							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], 0, string, 0, 0);
 						}
 						else
 						{
 							*string = 1;
 							*(string + 1) = 0;
-							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], 0, string, 0, 0);
 						}
 
 						numberOfStrings++;
@@ -264,7 +264,7 @@ namespace sampnode
 					case 'v':
 					{
 						cell* amxArray = static_cast<cell*>(params[i]);
-						amx_PushArray(amx.second->get(), &amx_addr[numberOfStrings], NULL, amxArray, arraySizes[i]);
+						amx_PushArray(amx.second->get(), &amx_addr[numberOfStrings], 0, amxArray, arraySizes[i]);
 						numberOfStrings++;
 					}
 					break;
@@ -402,7 +402,7 @@ namespace sampnode
 			std::vector<cell> amx_addr;
 			for (int i = 0; i < numberOfStrings; i++)
 			{
-				amx_addr.push_back(NULL);
+				amx_addr.push_back(0);
 			}
 			numberOfStrings = 0;
 
@@ -437,15 +437,15 @@ namespace sampnode
 					case 's':
 					{
 						char* string = static_cast<char*>(params[i]);
-						if (string != NULL && strlen(string) > 0)
+						if (string != 0 && strlen(string) > 0)
 						{
-							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], 0, string, 0, 0);
 						}
 						else
 						{
 							*string = 1;
 							*(string + 1) = 0;
-							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], NULL, string, 0, 0);
+							amx_PushString(amx.second->get(), &amx_addr[numberOfStrings], 0, string, 0, 0);
 						}
 
 						numberOfStrings++;
@@ -455,7 +455,7 @@ namespace sampnode
 					case 'v':
 					{
 						cell* amxArray = static_cast<cell*>(params[i]);
-						amx_PushArray(amx.second->get(), &amx_addr[numberOfStrings], NULL, amxArray, arraySizes[i]);
+						amx_PushArray(amx.second->get(), &amx_addr[numberOfStrings], 0, amxArray, arraySizes[i]);
 						numberOfStrings++;
 					}
 					break;
