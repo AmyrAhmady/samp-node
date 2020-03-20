@@ -8,6 +8,8 @@
 #include <sampgdk.h>
 #include "common.hpp"
 
+logprintf_t logprintf;
+
 PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX* amx, const char* name, cell* params, cell* retval)
 {
 	if (sampnode::js_calling_public)
@@ -61,10 +63,11 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////
 
+	logprintf = (logprintf_t)(ppData[PLUGIN_DATA_LOGPRINTF]);
+	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
 	sampnode::node_init(node_flags);
-	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 	return true;
 }
 

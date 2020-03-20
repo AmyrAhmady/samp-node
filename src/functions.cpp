@@ -1,6 +1,7 @@
 #include <utility>
 #include <string>
 #include "v8.h"
+#include "common.hpp"
 #include "functions.hpp"
 #include "events.hpp"
 #include "natives.hpp"
@@ -19,6 +20,7 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "callNative", sampnode::native::call_pawn_native },
 	{ "callPublic", sampnode::callback::call },
 	{ "callPublicFloat", sampnode::callback::call_float },
+	{ "logprint", sampnode::functions::logprint }
 };
 
 namespace sampnode
@@ -33,5 +35,16 @@ namespace sampnode
 		}
 
 		global->Set(v8::String::NewFromUtf8(isolate, "samp", v8::NewStringType::kNormal).ToLocalChecked(), sampObject);
+	}
+
+	void functions::logprint(const v8::FunctionCallbackInfo<v8::Value>& info)
+	{
+		if (info.Length() > 0)
+		{
+			v8::HandleScope scope(info.GetIsolate());
+			if (!info[0]->IsString())
+				return;
+			logprintf(utils::js_to_cstr(info[0]));
+		}
 	}
 }
