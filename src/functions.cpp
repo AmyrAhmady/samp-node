@@ -44,7 +44,8 @@ namespace sampnode
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString())
 				return;
-			logprintf(utils::js_to_cstr(info[0]));
+			v8::String::Utf8Value _str(info.GetIsolate(), info[0]);
+			logprintf(*_str);
 		}
 	}
 }
