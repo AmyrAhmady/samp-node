@@ -41,15 +41,20 @@ namespace sampnode
 	bool node_init()
 	{
 		std::vector<const char*> argvv;
-		argvv.push_back("node");
+        argvv.push_back("node");
 
-		for (auto& flag : Config::Get()->GetNodeFlags())
-		{
-			L_INFO << "Node Flags: " << flag;
-			argvv.push_back(flag.c_str());
-		}
+		std::vector<std::string> node_flags = Config::Get()->GetNodeFlags();
+        for (auto& flag : node_flags)
+        {
+            argvv.push_back(flag.c_str());
+        }
 
-		argvv.push_back("./index.js");
+        argvv.push_back("./index.js");
+
+        for (auto& i : argvv)
+        {
+            L_INFO << "[Argv] Node Flags: " << i;
+        }
 
 		int argc = argvv.size();	
 
