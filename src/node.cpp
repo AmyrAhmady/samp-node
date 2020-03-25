@@ -14,6 +14,7 @@
 #include "events.hpp"
 #include "v8impl.hpp"
 #include "logger.hpp"
+#include "config.hpp"
 
 static V8ScriptGlobals g_v8;
 
@@ -36,26 +37,21 @@ namespace sampnode
 {
 	v8::UniquePersistent<v8::Context> m_context;
 	node::Environment* m_nodeEnvironment;
-	bool node_init(const std::string& node_flags)
+
+	bool node_init()
 	{
 		std::vector<const char*> argvv;
 		argvv.push_back("node");
 
-		std::vector<std::string> vflags = utils::split(node_flags, ' ');
-
-		for (auto& flag : vflags)
+		for (auto& flag : Config::Get()->GetNodeFlags())
 		{
+			L_INFO << "Node Flags: " << flag;
 			argvv.push_back(flag.c_str());
 		}
 
 		argvv.push_back("./index.js");
 
-		int argc = argvv.size();
-
-		for (int i = 0; i < argc; i++)
-		{
-			L_DEBUG << "node flag: " << argvv[i];
-		}
+		int argc = argvv.size();	
 
 		char** argv = uv_setup_args(argc, (char**)argvv.data());
 		int exec_argc;
