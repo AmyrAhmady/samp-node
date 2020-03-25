@@ -43,6 +43,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps/node/include
 	${PROJECT_SOURCE_DIR}/deps/v8
 	${PROJECT_SOURCE_DIR}/deps/uv
+	${PROJECT_SOURCE_DIR}/deps/tinydir
 )
 
 # -
@@ -65,13 +66,13 @@ add_samp_plugin(${PROJECT_NAME}
 )
 
 if (WIN32)
-    set(LIBRARIES v8_libbase v8_libplatform node shlwapi dbghelp winmm)	
+    set(LIBRARIES v8_libbase v8_libplatform node shlwapi dbghelp winmm yaml-cpp)	
 else()
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		INSTALL_RPATH "$ORIGIN/..:$ORIGIN/")
 	target_link_libraries(${PROJECT_NAME} ${NODE_PATH}/libnode.so.64)	
 
-	set(LIBRARIES ${node} pthread dl m)		
+	set(LIBRARIES ${node} pthread dl m yaml-cpp)		
 
 	if(UNIX)
 		target_sources(${PROJECT_NAME} PUBLIC ${SAMPSDK_DIR}/amx/getch.c)

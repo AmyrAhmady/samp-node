@@ -4,3 +4,9 @@
 [submodule "deps/cmake-modules"]
 	path = deps/cmake-modules
 	url = https://github.com/Zeex/cmake-modules
+[submodule "deps/yaml-cpp"]
+	path = deps/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "deps/tinydir"]
+	path = deps/tinydir
+	url = https://github.com/cxong/tinydir.git
