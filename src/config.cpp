@@ -4,100 +4,94 @@
 
 namespace sampnode
 {
-    static const std::string CONFIG_FILE_NAME = "samp-node.yml";
+	static const std::string CONFIG_FILE_NAME = "samp-node";
 
-    bool Config::ParseFile()
-    {
-        YAML::Node root;
+	bool Config::ParseFile()
+	{
+		YAML::Node root;
 
-        try
-        {
-            root = YAML::LoadFile(CONFIG_FILE_NAME);
-        }
-        catch(const YAML::ParserException& e)
-        {
-            L_ERROR << "Could not parse the config file: " << e.what();
-            return false;
-        }
-        catch(const YAML::BadFile&)
-        {
-            L_ERROR << "Could not find the config file.";
-            return false;
-        }    
+		try
+		{
+			root = YAML::LoadFile(CONFIG_FILE_NAME + ".yml");
+		}
+		catch (const YAML::ParserException & e)
+		{
+			L_ERROR << "Could not parse the config file: " << e.what();
+			return false;
+		}
+		catch (const YAML::BadFile&)
+		{
+			L_ERROR << "Could not find the config file.";
+			return false;
+		}
 
-        if(root["plugin"])
-        {
-            if(root["plugin"]["working_dir"])
-            {
-                plugin.working_dir = root["plugin"]["working_dir"].as<std::string>();
-            }
+		if (root["plugin"])
+		{
+			if (root["plugin"]["entry_file"])
+			{
+				props.entry_file = root["plugin"]["entry_file"].as<std::string>();
+			}
+			else
+			{
+				props.entry_file = "./index.js";
+			}
 
-            if(root["plugin"]["resource_folder"])
-            {
-                plugin.resource_folder = root["plugin"]["resource_folder"].as<std::string>();
-            }
+			if (root["plugin"]["working_dir"])
+			{
+				props.working_dir = root["plugin"]["working_dir"].as<std::string>();
+			}
 
-            if(root["plugin"]["node_flags"])
-            {
-                YAML::Node const &node_flags = root["plugin"]["node_flags"];
+			if (root["plugin"]["resource_folder"])
+			{
+				props.resource_folder = root["plugin"]["resource_folder"].as<std::string>();
+			}
 
-                for(YAML::const_iterator y_it = node_flags.begin(); y_it != node_flags.end(); ++y_it)
-                {
-                    std::string flag = y_it->as<std::string>();
-                    
-                    if(flag.empty())
-                    {
-                        continue;
-                    }      
+			if (root["plugin"]["node_flags"])
+			{
+				YAML::Node const& node_flags = root["plugin"]["node_flags"];
 
-                    plugin.node_flags.push_back(flag);              
-                }
-            }
+				for (YAML::const_iterator y_it = node_flags.begin(); y_it != node_flags.end(); ++y_it)
+				{
+					std::string flag = y_it->as<std::string>();
 
-            if(root["plugin"]["resources"])
-            {
-                YAML::Node const &resources = root["plugin"]["resources"];
+					if (flag.empty())
+					{
+						continue;
+					}
 
-                for(YAML::const_iterator y_it = resources.begin(); y_it != resources.end(); ++y_it)
-                {
-                    std::string resource_name = y_it->as<std::string>();
+					props.node_flags.push_back(flag);
+				}
+			}
 
-                    if(resource_name.empty())
-                    {
-                        continue;
-                    }
+			if (root["plugin"]["resources"])
+			{
+				YAML::Node const& resources = root["plugin"]["resources"];
 
-                    plugin.resources.push_back(resource_name);
-                }
-            }            
-        }    
+				for (YAML::const_iterator y_it = resources.begin(); y_it != resources.end(); ++y_it)
+				{
+					std::string resource_name = y_it->as<std::string>();
 
-        return true;
-    }
+					if (resource_name.empty())
+					{
+						continue;
+					}
 
-    std::string Config::GetWorkingDirectory()
-    {
-        return plugin.working_dir;
-    }
+					props.resources.push_back(resource_name);
+				}
+			}
+		}
 
-    std::string Config::GetResourceFolder()
-    {
-        return plugin.resource_folder;
-    }
+		return true;
+	}
 
-    std::vector<std::string> Config::GetNodeFlags()
-    {
-        return plugin.node_flags;
-    }
+	Props_t& Config::Props()
+	{
+		return props;
+	}
 
-    std::vector<std::string> Config::GetResources()
-    {
-        return plugin.resources;
-    }
+	Config::Config()
+	{}
 
-    Config::Config()
-    {}
-
-    Config::~Config()
-    {}    
+	Config::~Config()
+	{}
 };

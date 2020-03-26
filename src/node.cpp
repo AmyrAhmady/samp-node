@@ -40,25 +40,36 @@ namespace sampnode
 
 	bool node_init()
 	{
+		const Props_t& config = Config::Get()->Props();
+#ifdef WIN32
+		{
+			const std::string& workspace = config.working_dir + ";$NODE_PATH";
+			// for future
+		}
+#else
+		{
+			const std::string& workspace = config.working_dir + ":$NODE_PATH";
+			// for future
+		}
+#endif
+		const std::string& entryFile = config.entry_file;
 		std::vector<const char*> argvv;
         argvv.push_back("node");
 
-		std::vector<std::string> node_flags = Config::Get()->GetNodeFlags();
+		const std::vector<std::string>& node_flags = config.node_flags;
         for (auto& flag : node_flags)
         {
             argvv.push_back(flag.c_str());
         }
 
-        argvv.push_back("./index.js");
-
-        for (auto& i : argvv)
-        {
-            L_INFO << "[Argv] Node Flags: " << i;
-        }
-
+        argvv.push_back(entryFile.c_str());
 		int argc = argvv.size();	
 
-		char** argv = uv_setup_args(argc, (char**)argvv.data());
+		for (int i = 0; i < argc; i++)
+		{
+			L_INFO << "node flags: " << argvv[i];
+		}
+
 		int exec_argc;
 		const char** exec_argv;
 		g_v8.Initialize(&argc, argvv.data(), &exec_argc, &exec_argv);
@@ -74,7 +85,7 @@ namespace sampnode
 		m_context.Reset(GetV8Isolate(), context);
 		v8::Context::Scope scope(context);
 
-		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, argv, 0, nullptr);
+		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, (char**)argvv.data(), 0, nullptr);
 		node::LoadEnvironment(env);
 		m_nodeEnvironment = env;
 

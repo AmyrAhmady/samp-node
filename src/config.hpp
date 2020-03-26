@@ -4,6 +4,15 @@
 
 namespace sampnode
 {
+    struct Props_t
+    {
+        std::string entry_file;
+        std::string working_dir;
+        std::string resource_folder;
+        std::vector<std::string> node_flags;
+        std::vector<std::string> resources;
+    };
+
     class Config : public Singleton<Config>
     {
         friend class Singleton<Config>;
@@ -12,18 +21,11 @@ namespace sampnode
         ~Config();
         
         bool ParseFile();
-        std::string GetWorkingDirectory();
-        std::string GetResourceFolder();
-        std::vector<std::string> GetNodeFlags();
-        std::vector<std::string> GetResources();        
+        Props_t& Config::Props();      
 
     private:
-        struct Plugin
-        {
-            std::string working_dir;
-            std::string resource_folder;
-            std::vector<std::string> node_flags;
-            std::vector<std::string> resources;
-        } plugin;     
+        Props_t props;
+
+        bool usingJson = true;
     };
 };
