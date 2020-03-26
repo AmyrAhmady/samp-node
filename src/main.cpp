@@ -45,6 +45,8 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 
 	if(!sampnode::Config::Get()->ParseFile())
 	{	
+		L_ERROR << "Unable to load samp-node config file, you need to have samp-node.json or samp-node.yml in root directory" 
+			<< std::endl << "\tPlease read about samp-node config file in our wiki pages at https://github.com/AmyrAhmady/samp-node/wiki";
 		return false;
 	}
 
