@@ -24,4 +24,5 @@ namespace sampnode
 	}
 
 	extern v8::UniquePersistent<v8::Context> m_context;
+	extern v8::Isolate* g_isolate;
 }

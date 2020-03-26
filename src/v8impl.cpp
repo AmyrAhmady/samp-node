@@ -5,7 +5,7 @@
 #include "env-inl.h"
 #include "v8.h"
 #include "uv.h"
-#include "node.h"
+#include "node.hpp"
 #include "libplatform/libplatform.h"
 #include "v8impl.hpp"
 
@@ -61,27 +61,10 @@ void V8ScriptGlobals::Initialize(int* argc,
 	int eac;
 	const char** eav;
 
-	/*std::vector<const char*> args{
-		"",
-		"--expose-internals",
-	};
-
-	for (int i = 0; i < g_argc; i++)
-	{
-		if (g_argv[i] && g_argv[i][0] == '-')
-		{
-			args.push_back(g_argv[i]);
-		}
-	}*/
-
-	//int argc2 = args.size();
-
 	node::Init(argc, argv, &eac, &eav);
-
 	m_loop = std::make_unique<UvLoopHolder>("dope");
-
 	m_nodeData = node::CreateIsolateData(m_isolate, m_loop->GetLoop(), platform, (node::ArrayBufferAllocator*)m_arrayBufferAllocator.get());
-
+	sampnode::g_isolate = m_isolate;
 }
 
 V8ScriptGlobals::~V8ScriptGlobals()
