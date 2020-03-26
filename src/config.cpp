@@ -1,12 +1,97 @@
 #include <string>
+#include <fstream>
+#include <vector>
+#include <yaml-cpp/yaml.h>
+#include "json.hpp"
 #include "logger.hpp"
 #include "config.hpp"
+
+using json = nlohmann::json;
 
 namespace sampnode
 {
 	static const std::string CONFIG_FILE_NAME = "samp-node";
 
 	bool Config::ParseFile()
+	{
+		if (!ParseJsonFile())
+		{
+			if (!ParseYamlFile())
+			{
+				return false;
+			}
+			else
+			{
+				L_DEBUG << "plugin is using " << CONFIG_FILE_NAME << ".yml config file";
+				return true;
+			}
+		}
+		else
+		{
+			L_DEBUG << "plugin is using " << CONFIG_FILE_NAME << ".josn config file";
+			return true;
+		}
+	}
+
+	bool Config::ParseJsonFile()
+	{
+		std::ifstream jsonFile(CONFIG_FILE_NAME + ".json");
+		json jsonObject;
+		jsonFile >> jsonObject;
+		if (!jsonObject.is_null())
+		{
+			if (!jsonObject["entry_file"].is_null())
+			{
+				props.entry_file = jsonObject["entry_file"].get<std::string>();
+			}
+			else
+			{
+				props.entry_file = "./index.js";
+			}
+
+			if (!jsonObject["working_dir"].is_null())
+			{
+				props.working_dir = jsonObject["working_dir"].get<std::string>();
+			}
+
+			if (!jsonObject["resource_folder"].is_null())
+			{
+				props.resource_folder = jsonObject["resource_folder"].get<std::string>();
+			}
+
+			if (!jsonObject["node_flags"].is_null())
+			{
+				const std::vector<std::string>& node_flags = jsonObject["node_flags"];
+
+				for (auto& flag : node_flags)
+				{
+					if (flag.empty())
+					{
+						continue;
+					}
+					props.node_flags.push_back(flag);
+				}
+			}
+
+			if (!jsonObject["resources"].is_null())
+			{
+				const std::vector<std::string> resources = jsonObject["resources"];
+
+				for (auto& resource : resources)
+				{
+					if (resource.empty())
+					{
+						continue;
+					}
+					props.resources.push_back(resource);
+				}
+			}
+			return true;
+		}
+		else return false;
+	}
+
+	bool Config::ParseYamlFile()
 	{
 		YAML::Node root;
 
@@ -79,9 +164,9 @@ namespace sampnode
 					props.resources.push_back(resource_name);
 				}
 			}
+			return true;
 		}
-
-		return true;
+		return false;
 	}
 
 	Props_t& Config::Props()

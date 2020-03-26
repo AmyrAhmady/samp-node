@@ -10,3 +10,6 @@
 [submodule "deps/tinydir"]
 	path = deps/tinydir
 	url = https://github.com/cxong/tinydir.git
+[submodule "deps/json"]
+	path = deps/json
+	url = https://github.com/nlohmann/json

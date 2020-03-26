@@ -43,6 +43,7 @@ include_directories(
 	${PROJECT_SOURCE_DIR}/deps/node/include
 	${PROJECT_SOURCE_DIR}/deps/v8
 	${PROJECT_SOURCE_DIR}/deps/uv
+	${PROJECT_SOURCE_DIR}/deps/json/single_include/nlohmann
 	${PROJECT_SOURCE_DIR}/deps/tinydir
 )
 

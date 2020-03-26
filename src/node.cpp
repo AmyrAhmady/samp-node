@@ -68,7 +68,7 @@ namespace sampnode
 
 		for (int i = 0; i < argc; i++)
 		{
-			L_INFO << "node flags: " << argvv[i];
+			L_DEBUG << "node flags: " << argvv[i];
 		}
 
 		int exec_argc;

@@ -1,6 +1,5 @@
 #include <vector>
 #include "singleton.hpp"
-#include <yaml-cpp/yaml.h>
 
 namespace sampnode
 {
@@ -11,6 +10,7 @@ namespace sampnode
         std::string resource_folder;
         std::vector<std::string> node_flags;
         std::vector<std::string> resources;
+        unsigned char log_level = 4;
     };
 
     class Config : public Singleton<Config>
@@ -21,6 +21,8 @@ namespace sampnode
         ~Config();
         
         bool ParseFile();
+        bool ParseYamlFile();
+        bool ParseJsonFile();
         Props_t& Config::Props();      
 
     private:
