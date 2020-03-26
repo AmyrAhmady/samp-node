@@ -23,7 +23,7 @@ namespace sampnode
         bool ParseFile();
         bool ParseYamlFile();
         bool ParseJsonFile();
-        Props_t& Config::Props();      
+        Props_t& Props();      
 
     private:
         Props_t props;

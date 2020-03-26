@@ -36,68 +36,72 @@ namespace sampnode
 	bool Config::ParseJsonFile()
 	{
 		std::ifstream jsonFile(CONFIG_FILE_NAME + ".json");
-		json jsonObject;
-		jsonFile >> jsonObject;
-		if (!jsonObject.is_null())
+		if(jsonFile.good())
 		{
-			if (!jsonObject["entry_file"].is_null())
+			json jsonObject;
+			jsonFile >> jsonObject;
+			if (!jsonObject.is_null())
 			{
-				props.entry_file = jsonObject["entry_file"].get<std::string>();
-			}
-			else
-			{
-				props.entry_file = "./index.js";
-			}
-
-			if (!jsonObject["working_dir"].is_null())
-			{
-				props.working_dir = jsonObject["working_dir"].get<std::string>();
-			}
-
-			if (!jsonObject["resource_folder"].is_null())
-			{
-				props.resource_folder = jsonObject["resource_folder"].get<std::string>();
-			}
-
-			if (!jsonObject["node_flags"].is_null())
-			{
-				const std::vector<std::string>& node_flags = jsonObject["node_flags"];
-
-				for (auto& flag : node_flags)
+				if (!jsonObject["entry_file"].is_null())
 				{
-					if (flag.empty())
-					{
-						continue;
-					}
-					props.node_flags.push_back(flag);
+					props.entry_file = jsonObject["entry_file"].get<std::string>();
 				}
-			}
-
-			if (!jsonObject["resources"].is_null())
-			{
-				const std::vector<std::string> resources = jsonObject["resources"];
-
-				for (auto& resource : resources)
+				else
 				{
-					if (resource.empty())
-					{
-						continue;
-					}
-					props.resources.push_back(resource);
+					props.entry_file = "./index.js";
 				}
+
+				if (!jsonObject["working_dir"].is_null())
+				{
+					props.working_dir = jsonObject["working_dir"].get<std::string>();
+				}
+
+				if (!jsonObject["resource_folder"].is_null())
+				{
+					props.resource_folder = jsonObject["resource_folder"].get<std::string>();
+				}
+
+				if (!jsonObject["node_flags"].is_null())
+				{
+					const std::vector<std::string>& node_flags = jsonObject["node_flags"];
+
+					for (auto& flag : node_flags)
+					{
+						if (flag.empty())
+						{
+							continue;
+						}
+						props.node_flags.push_back(flag);
+					}
+				}
+
+				if (!jsonObject["resources"].is_null())
+				{
+					const std::vector<std::string> resources = jsonObject["resources"];
+
+					for (auto& resource : resources)
+					{
+						if (resource.empty())
+						{
+							continue;
+						}
+						props.resources.push_back(resource);
+					}
+				}
+				return true;
 			}
-			return true;
 		}
-		else return false;
+
+		return false;
 	}
 
 	bool Config::ParseYamlFile()
 	{
-		YAML::Node root;
+		YAML::Node yamlObject;
 
 		try
 		{
-			root = YAML::LoadFile(CONFIG_FILE_NAME + ".yml");
+			yamlObject = YAML::LoadFile(CONFIG_FILE_NAME + ".yml");
 		}
 		catch (const YAML::ParserException & e)
 		{
@@ -110,30 +114,30 @@ namespace sampnode
 			return false;
 		}
 
-		if (root["plugin"])
+		if (yamlObject["plugin"])
 		{
-			if (root["plugin"]["entry_file"])
+			if (yamlObject["plugin"]["entry_file"])
 			{
-				props.entry_file = root["plugin"]["entry_file"].as<std::string>();
+				props.entry_file = yamlObject["plugin"]["entry_file"].as<std::string>();
 			}
 			else
 			{
 				props.entry_file = "./index.js";
 			}
 
-			if (root["plugin"]["working_dir"])
+			if (yamlObject["plugin"]["working_dir"])
 			{
-				props.working_dir = root["plugin"]["working_dir"].as<std::string>();
+				props.working_dir = yamlObject["plugin"]["working_dir"].as<std::string>();
 			}
 
-			if (root["plugin"]["resource_folder"])
+			if (yamlObject["plugin"]["resource_folder"])
 			{
-				props.resource_folder = root["plugin"]["resource_folder"].as<std::string>();
+				props.resource_folder = yamlObject["plugin"]["resource_folder"].as<std::string>();
 			}
 
-			if (root["plugin"]["node_flags"])
+			if (yamlObject["plugin"]["node_flags"])
 			{
-				YAML::Node const& node_flags = root["plugin"]["node_flags"];
+				YAML::Node const& node_flags = yamlObject["plugin"]["node_flags"];
 
 				for (YAML::const_iterator y_it = node_flags.begin(); y_it != node_flags.end(); ++y_it)
 				{
@@ -148,9 +152,9 @@ namespace sampnode
 				}
 			}
 
-			if (root["plugin"]["resources"])
+			if (yamlObject["plugin"]["resources"])
 			{
-				YAML::Node const& resources = root["plugin"]["resources"];
+				YAML::Node const& resources = yamlObject["plugin"]["resources"];
 
 				for (YAML::const_iterator y_it = resources.begin(); y_it != resources.end(); ++y_it)
 				{
@@ -164,8 +168,10 @@ namespace sampnode
 					props.resources.push_back(resource_name);
 				}
 			}
+			
 			return true;
 		}
+
 		return false;
 	}
 
