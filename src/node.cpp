@@ -36,6 +36,7 @@ static node::IsolateData* GetNodeIsolate()
 namespace sampnode
 {
 	v8::UniquePersistent<v8::Context> m_context;
+	v8::Isolate* g_isolate;
 	node::Environment* m_nodeEnvironment;
 
 	bool node_init()
