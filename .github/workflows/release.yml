@@ -1,0 +1,64 @@
+name: Release CI
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  linux:
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@master
+      with:
+          submodules: 'true'
+    - name: install packages
+      run: sudo apt-get install g++-multilib cmake 
+    - name: cmake
+      run: mkdir build && cd build && cmake ..
+    - name: make
+      run: cd build && make -j4
+    - name: cpack
+      run: cd build && cpack
+    - name: create releases directory
+      run: mkdir releases
+    - name: move release package
+      run: cd build && mv cpack/*.tar.gz ../releases/samp-node-linux.tar.gz
+    - name: Upload to release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./releases/samp-node-linux.tar.gz
+        asset_name: samp-node-linux.tar.gz
+        asset_content_type: application/gzip
+    
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@master
+      with:
+          submodules: 'true'
+    - name: cmake
+      run: mkdir build && cd build && cmake .. -A Win32
+    - name: build
+      run: cd build && cmake --build . --config Release
+    - name: cpack
+      shell: powershell
+      run: $env:PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\;$env:PATH"; cd build; cpack
+    - name: create releases directory
+      run: mkdir releases
+    - name: move release package
+      run: cd build && mv cpack/*.zip ../releases/samp-node-windows.zip
+    - name: Upload to release
+      id: upload-release-asset 
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./releases/samp-node-windows.zip
+        asset_name: samp-node-windows.zip
+        asset_content_type: application/zip
