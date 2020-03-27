@@ -1,0 +1,53 @@
+name: Build CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  linux:
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          submodules: 'true'
+    - name: install packages
+      run: sudo apt-get install g++-multilib cmake 
+    - name: cmake
+      run: mkdir build && cd build && cmake ..
+    - name: make
+      run: cd build && make -j4
+    - name: cpack
+      run: cd build && cpack
+    - name: create releases directory
+      run: mkdir releases
+    - name: move release package
+      run: cd build && mv cpack/*.tar.gz ../releases/samp-node-linux.tar.gz
+    - uses: actions/upload-artifact@v1
+      with:
+        name: linux-build-artifact.tar.gz
+        path: releases/samp-node-linux.tar.gz
+    
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+          submodules: 'true'
+    - name: cmake
+      run: mkdir build && cd build && cmake .. -A Win32
+    - name: build
+      run: cd build && cmake --build . --config Release
+    - name: cpack
+      shell: powershell
+      run: $env:PATH="C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\;$env:PATH"; cd build; cpack
+    - name: create releases directory
+      run: mkdir releases
+    - name: move release package
+      run: cd build && mv cpack/*.zip ../releases/samp-node-windows.zip
+    - uses: actions/upload-artifact@v1
+      with:
+        name: windows-build-artifact.zip
+        path: releases/samp-node-windows.zip
