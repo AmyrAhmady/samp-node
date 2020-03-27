@@ -11,7 +11,7 @@
   },
   "resources": [
     {
-      "name": "samp-node-.+-linux.tar.gz",
+      "name": "samp-node-linux.tar.gz",
       "archive": true,
       "platform": "linux",
       "files": {
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "name": "samp-node-.+-windows.zip",
+      "name": "samp-node-windows.zip",
       "archive": true,
       "platform": "windows",     
       "plugins": [
