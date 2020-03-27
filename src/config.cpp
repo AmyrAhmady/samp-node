@@ -110,7 +110,6 @@ namespace sampnode
 		}
 		catch (const YAML::BadFile&)
 		{
-			L_ERROR << "Could not find the config file.";
 			return false;
 		}
 
@@ -168,10 +167,8 @@ namespace sampnode
 					props.resources.push_back(resource_name);
 				}
 			}
-			
 			return true;
 		}
-
 		return false;
 	}
 
