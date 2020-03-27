@@ -1,7 +1,8 @@
 #include <fstream>
 #include <iostream>
-#include "logger.hpp"
 #include <ctime>
+#include "logger.hpp"
+#include "config.hpp"
 
 void Log::Init()
 {
@@ -14,9 +15,9 @@ void Log::Init()
 	sprintf(timestamp_buff, "[%02d/%02d/%d - %02d:%02d:%02d] %%s\n",
 		current_tm->tm_mday, current_tm->tm_mon + 1, current_tm->tm_year + 1900,
 		current_tm->tm_hour, current_tm->tm_min, current_tm->tm_sec);
-	sprintf(chLogBuff, timestamp_buff, "sampnode plugin started...");
+	sprintf(chLogBuff, timestamp_buff, "-> [PLUGIN] samp-node plugin started...");
 
-	std::ofstream file("sampnode.log", std::ofstream::out | std::ofstream::app);
+	std::ofstream file("samp-node.log", std::ofstream::out | std::ofstream::app);
 	if (file.is_open())
 	{
 		file << chLogBuff;
@@ -26,18 +27,27 @@ void Log::Init()
 
 std::ostringstream& Log::Get(LogLevel level)
 {
-	time_t curr_time;
-	curr_time = time(NULL);
-	struct tm* tm_local;
-	tm_local = localtime(&curr_time);
+	currentLevel = level;
+	if (sampnode::Config::Get()->Props().log_level > level)
+	{
+		time_t curr_time;
+		curr_time = time(NULL);
+		struct tm* tm_local;
+		tm_local = localtime(&curr_time);
 
-	char month_buff[12];
-	char time_buff[12];
-	sprintf(month_buff, "%02d/%02d/%d", tm_local->tm_mday, tm_local->tm_mon + 1, tm_local->tm_year + 1900);
-	sprintf(time_buff, "%02d:%02d:%02d", tm_local->tm_hour, tm_local->tm_min, tm_local->tm_sec);
-	os << "[" << month_buff << " - " << time_buff << "]";
-	os << " -> " << GetLevelName(level) << ": ";
-	return os;
+		char month_buff[12];
+		char time_buff[12];
+		sprintf(month_buff, "%02d/%02d/%d", tm_local->tm_mday, tm_local->tm_mon + 1, tm_local->tm_year + 1900);
+		sprintf(time_buff, "%02d:%02d:%02d", tm_local->tm_hour, tm_local->tm_min, tm_local->tm_sec);
+		os << "[" << month_buff << " - " << time_buff << "]";
+		os << " -> " << GetLevelName(level) << ": ";
+		return os;
+	}
+	else
+	{
+		os.str("");
+		return os;
+	}
 }
 
 Log::Log()
@@ -47,17 +57,19 @@ Log::Log()
 
 Log::~Log()
 {
-	os << std::endl;
-
-	std::ofstream file("sampnode.log", std::ofstream::out | std::ofstream::app);
-	if (file.is_open())
+	if (sampnode::Config::Get()->Props().log_level > currentLevel)
 	{
-		file << os.str();
-		std::cout << os.str();
-		os.str("");
-		os.clear();
-	}
+		os << std::endl;
 
+		std::ofstream file("samp-node.log", std::ofstream::out | std::ofstream::app);
+		if (file.is_open())
+		{
+			file << os.str();
+			std::cout << os.str();
+			os.str("");
+			os.clear();
+		}
+	}
 }
 
 std::string Log::GetLevelName(LogLevel level)

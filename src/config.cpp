@@ -53,6 +53,11 @@ namespace sampnode
 				props.entry_file = "./index.js";
 			}
 
+			if (!jsonObject["log_level"].is_null())
+			{
+				props.log_level = static_cast<LogLevel>(jsonObject["log_level"].get<int>());
+			}
+
 			if (!jsonObject["working_dir"].is_null())
 			{
 				props.working_dir = jsonObject["working_dir"].get<std::string>();
@@ -122,6 +127,11 @@ namespace sampnode
 			else
 			{
 				props.entry_file = "./index.js";
+			}
+
+			if (yamlObject["plugin"]["log_level"])
+			{
+				props.log_level = static_cast<LogLevel>(yamlObject["plugin"]["log_level"].as<int>());
 			}
 
 			if (yamlObject["plugin"]["working_dir"])
