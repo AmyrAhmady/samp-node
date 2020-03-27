@@ -22,13 +22,13 @@ namespace sampnode
 			}
 			else
 			{
-				L_DEBUG << "plugin is using " << CONFIG_FILE_NAME << ".yml config file";
+				L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".yml config file";
 				return true;
 			}
 		}
 		else
 		{
-			L_DEBUG << "plugin is using " << CONFIG_FILE_NAME << ".josn config file";
+			L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".josn config file";
 			return true;
 		}
 	}
