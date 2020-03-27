@@ -5,7 +5,6 @@
 #define L_DEBUG Log().Get(LogLevel::LOG_DEBUG)
 #define L_WARN Log().Get(LogLevel::LOG_WARN)
 #define L_ERROR Log().Get(LogLevel::LOG_ERROR)
-#define L_FATAL Log().Get(LogLevel::LOG_FATAL)
 
 enum class LogLevel {
     LOG_FATAL, LOG_ERROR, LOG_WARN, LOG_INFO, LOG_DEBUG

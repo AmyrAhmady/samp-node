@@ -65,9 +65,6 @@ std::string Log::GetLevelName(LogLevel level)
 	std::string levelName = "[LOG_UNKNOWN]";
 	switch (level)
 	{
-	case LogLevel::LOG_FATAL:
-		levelName = "[FATAL ERROR]";
-		break;
 	case LogLevel::LOG_ERROR:
 		levelName = "[ERROR]";
 		break;
