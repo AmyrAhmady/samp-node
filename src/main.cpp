@@ -50,6 +50,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 		return false;
 	}
 
+	Log::Init();
 	sampgdk::Load(ppData);
 
 	sampnode::callback::init();
