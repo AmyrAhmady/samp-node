@@ -20,8 +20,8 @@ namespace sampnode
 	{
 		{ "OnGameModeInit", "", "EVENT_GAME_MODE_INIT" },
 		{ "OnGameModeExit", "", "EVENT_GAME_MODE_EXIT" },
-		{ "OnFilterScriptInit", "", "EVENT_FILTERSCRIPT_INIT" },
-		{ "OnFilterScriptExit", "", "EVENT_FILTERSCRIPT_EXIT" },
+		{ "OnFilterScriptInit", "", "EVENT_FILTER_SCRIPT_INIT" },
+		{ "OnFilterScriptExit", "", "EVENT_FILTER_SCRIPT_EXIT" },
 		{ "OnPlayerConnect", "i", "EVENT_PLAYER_CONNECT" },
 		{ "OnPlayerDisconnect", "ii", "EVENT_PLAYER_DISCONNECT" },
 		{ "OnPlayerSpawn", "i", "EVENT_PLAYER_SPAWN" },
@@ -29,7 +29,7 @@ namespace sampnode
 		{ "OnVehicleSpawn", "i", "EVENT_VEHICLE_SPAWN" },
 		{ "OnVehicleDeath", "ii", "EVENT_VEHICLE_DEATH" },
 		{ "OnPlayerText", "is", "EVENT_PLAYER_TEXT" },
-		{ "OnPlayerCommandText", "is", "EVENT_PLAYER_COMMAND" },
+		{ "OnPlayerCommandText", "is", "EVENT_PLAYER_COMMAND_TEXT" },
 		{ "OnPlayerRequestClass", "ii", "EVENT_PLAYER_REQUEST_CLASS" },
 		{ "OnPlayerEnterVehicle", "iii", "EVENT_PLAYER_ENTER_VEHICLE" },
 		{ "OnPlayerExitVehicle", "ii", "EVENT_PLAYER_EXIT_VEHICLE" },
@@ -45,10 +45,10 @@ namespace sampnode
 		{ "OnPlayerPickUpPickup", "ii", "EVENT_PLAYER_PICK_UP_PICKUP" },
 		{ "OnVehicleMod", "iii", "EVENT_VEHICLE_MOD" },
 		{ "OnEnterExitModShop", "iii", "EVENT_ENTER_EXIT_MOD_SHOP" },
-		{ "OnVehiclePaintjob", "iii", "EVENT_VEHICLE_PAINT_JOB" },
+		{ "OnVehiclePaintjob", "iii", "EVENT_VEHICLE_PAINTJOB" },
 		{ "OnVehicleRespray", "iiii", "EVENT_VEHICLE_RESPRAY" },
-		{ "OnVehicleDamageStatusUpdate", "ii", "EVENT_VEHICLE_DAMAGE_UPDATE" },
-		{ "OnUnoccupiedVehicleUpdate", "iiiffffff", "EVENT_ONOCCUPIED_VEHICLE_UPDATE" },
+		{ "OnVehicleDamageStatusUpdate", "ii", "EVENT_VEHICLE_DAMAGE_STATUS_UPDATE" },
+		{ "OnUnoccupiedVehicleUpdate", "iiiffffff", "EVENT_UNOCCUPIED_VEHICLE_UPDATE" },
 		{ "OnPlayerSelectedMenuRow", "ii", "EVENT_PLAYER_SELECTED_MENU_ROW" },
 		{ "OnPlayerExitedMenu", "i", "EVENT_PLAYER_EXITED_MENU" },
 		{ "OnPlayerInteriorChange", "iii", "EVENT_PLAYER_INTERIOR_CHANGE" },
@@ -77,7 +77,9 @@ namespace sampnode
 		{ "OnPlayerEditObject", "iiiiffffff", "EVENT_PLAYER_EDIT_OBJECT" },
 		{ "OnPlayerEditAttachedObject", "iiiiifffffffff", "EVENT_PLAYER_EDIT_ATTACHED_OBJECT" },
 		{ "OnPlayerSelectObject", "iiiifff", "EVENT_PLAYER_SELECT_OBJECT" },
-		{ "OnPlayerWeaponShot", "iiiifff", "EVENT_PLAYER_WEAPON_SHOT" }
+		{ "OnPlayerWeaponShot", "iiiifff", "EVENT_PLAYER_WEAPON_SHOT" },
+		{ "OnClientCheckResponse", "iiii", "EVENT_CLIENT_CHECK_RESPONSE" },
+		{ "OnScriptCash", "iii", "EVENT_SCRIPT_CASH" }
 	};
 
 	void callback::init()
@@ -223,7 +225,7 @@ namespace sampnode
 					continue;
 				}
 
-				if(callback < -10000)
+				if (callback < -10000)
 				{
 					continue;
 				}
