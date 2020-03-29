@@ -20,5 +20,6 @@ But if you are looking for a stable version (or using sampctl), please visit [he
 - [Hual](https://github.com/Hual/) for some v8 tips he gave me
 - [Graber](https://github.com/AGraber) for a few suggestions and helpful advices
 - [pkfln (peek)](https://github.com/pkfln) for fixing and adding some samp callbacks/events in samp-node
+- [polygxn](https://github.com/polygxn) for his changes in README.md which don't exist anymore
 - [JustMichael (ADRFranklin)](https://github.com/ADRFranklin) for his contributions, including fixes, features, and any others he's going to do in future
 - [iAmir (Amyr Aahmady)](https://github.com/AmyrAhmady) that's me.
