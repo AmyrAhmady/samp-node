@@ -28,7 +28,7 @@ namespace sampnode
 		}
 		else
 		{
-			L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".josn config file";
+			L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".json config file";
 			return true;
 		}
 	}
@@ -36,12 +36,15 @@ namespace sampnode
 	bool Config::ParseJsonFile()
 	{
 		std::ifstream jsonFile(CONFIG_FILE_NAME + ".json");
+
 		if (!jsonFile.good())
 		{
 			return false;
 		}
+		
 		json jsonObject;
 		jsonFile >> jsonObject;
+
 		if (!jsonObject.is_null())
 		{
 			if (!jsonObject["entry_file"].is_null())
