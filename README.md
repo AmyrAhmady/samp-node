@@ -9,16 +9,13 @@ Todo:
 
 
 ## Download
-You can always find latest builds [here](https://github.com/AmyrAhmady/samp-node/actions?query=workflow%3A%22Build+CI%22)
-
+You can always find latest builds [here](https://github.com/AmyrAhmady/samp-node/actions?query=workflow%3A%22Build+CI%22)\
 But if you are looking for a stable version (or using sampctl), please visit [here](https://github.com/AmyrAhmady/samp-node/wiki/Installation)
 
 
 ## type definitions for TypeScript
-here's a link to the repository: https://github.com/samp-dev/node
-
-follow the instructions there to make best use of it
-
+here's a link to the repository: https://github.com/samp-dev/node \
+follow the instructions there to make best use of it\
 special thanks to [pkfln (peek)](https://github.com/pkfln).
 
 
