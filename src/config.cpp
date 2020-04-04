@@ -57,7 +57,6 @@ namespace sampnode
 			jsonObject = object;
 			return true;
 		}
-		std::vector<int> hey = object["hey"];
 		return false;
 	}
 
