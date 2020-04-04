@@ -40,6 +40,8 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 	logprintf = (logprintf_t)(ppData[PLUGIN_DATA_LOGPRINTF]);
 	pAMXFunctions = ppData[PLUGIN_DATA_AMX_EXPORTS];
 
+	Log::Init();
+
 	if (!sampnode::Config::Get()->ParseFile())
 	{
 		L_ERROR << "Unable to load samp-node config file, you need to have samp-node.json or samp-node.yml in root directory"
@@ -47,7 +49,6 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 		return false;
 	}
 
-	Log::Init();
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
 	sampnode::node_init();
