@@ -11,7 +11,7 @@ namespace sampnode
 		std::string resource_folder;
 		std::vector<std::string> node_flags;
 		std::vector<std::string> resources;
-		LogLevel log_level = LogLevel::LOG_INFO;
+		LogLevel log_level = LogLevel::LOG_FULL;
 	};
 
 	class Config : public Singleton<Config>
