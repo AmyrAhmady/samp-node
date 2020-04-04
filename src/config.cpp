@@ -38,6 +38,8 @@ namespace sampnode
 		props.resources = get_as<std::vector<std::string>>("resources");
 		props.node_flags = get_as<std::vector<std::string>>("node_flags");
 		props.log_level = static_cast<LogLevel>(get_as<int>("log_level"));
+
+		return true;
 	}
 
 	bool Config::ParseJsonFile()
