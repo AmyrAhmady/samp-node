@@ -17,7 +17,8 @@ static std::pair<std::string, v8::FunctionCallback> sampnodeSpecificFunctions[] 
 	{ "removeEventListener", sampnode::event::remove_listener },
 	{ "fire", sampnode::event::fire },
 	{ "registerEvent", sampnode::event::register_event },
-	{ "callNative", sampnode::native::call_pawn_native },
+	{ "callNative", sampnode::native::call },
+	{ "callNativeFloat", sampnode::native::call_float },
 	{ "callPublic", sampnode::callback::call },
 	{ "callPublicFloat", sampnode::callback::call_float },
 	{ "logprint", sampnode::functions::logprint }
