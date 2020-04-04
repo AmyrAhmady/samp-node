@@ -1,6 +1,10 @@
 #include <vector>
 #include "singleton.hpp"
+#include <yaml-cpp/yaml.h>
+#include "json.hpp"
 #include "logger.hpp"
+
+using json = nlohmann::json;
 
 namespace sampnode
 {
@@ -24,11 +28,16 @@ namespace sampnode
 		bool ParseFile();
 		bool ParseYamlFile();
 		bool ParseJsonFile();
+
+		template<typename T, typename... args>
+		T get_as(const args&... keys);
+
 		Props_t& Props();
 
 	private:
 		Props_t props;
-
+		json jsonObject;
+		YAML::Node yamlObject;
 		bool usingJson = true;
 	};
 };
