@@ -14,6 +14,10 @@ You can always find latest builds [here](https://github.com/AmyrAhmady/samp-node
 But if you are looking for a stable version (or using sampctl), please visit [here](https://github.com/AmyrAhmady/samp-node/wiki/Installation)
 
 
+## type definitions for TypeScript
+here's a link to the repository: https://github.com/samp-dev/node
+follow the instructions there to make best use of it
+
 
 ## Credits
 - [Damo](https://github.com/damopewpew) for his [samp.js project](https://github.com/damopewpew/samp.js). 80% of native caller code is from that project, cause I didn't want to do all the args processing by myself when there's already something useful out there!
