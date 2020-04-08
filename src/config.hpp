@@ -1,5 +1,4 @@
 #include <vector>
-#include "singleton.hpp"
 #include <yaml-cpp/yaml.h>
 #include "json.hpp"
 #include "logger.hpp"
@@ -18,9 +17,8 @@ namespace sampnode
 		LogLevel log_level = LogLevel::LOG_FULL;
 	};
 
-	class Config : public Singleton<Config>
+	class Config
 	{
-		friend class Singleton<Config>;
 	public:
 		Config();
 		~Config();
