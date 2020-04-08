@@ -104,7 +104,14 @@ namespace sampnode
 		m_context.Reset();
 	}
 
-	v8::Local<v8::Value> node_execute_code(const std::string& source, const std::string& name)
+	void node_run_code(const std::string& source)
+	{
+		v8::Handle<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
+		v8::Handle<v8::Script>& script = v8::Script::Compile(sourceV8String);
+		script->Run();
+	}
+
+	v8::Local<v8::Value> node_add_module(const std::string& source, const std::string& name)
 	{
 		v8::Isolate* isolate = GetV8Isolate();
 		//v8::Locker v8Locker(isolate);
@@ -122,16 +129,19 @@ namespace sampnode
 
 		auto script = v8::Script::Compile(sourceCode, &origin);
 
-		if (script.IsEmpty()) {
+		if (script.IsEmpty())
+		{
 			isolate->CancelTerminateExecution();
 			v8::String::Utf8Value exception(try_catch.Exception());
 			const char* exception_string = *exception;
 			v8::Local<v8::Message> message = try_catch.Message();
 
-			if (message.IsEmpty()) {
+			if (message.IsEmpty())
+			{
 				L_ERROR << exception_string;
 			}
-			else {
+			else
+			{
 				v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
 				const char* filename_string = *filename;
 				int linenum = message->GetLineNumber();
@@ -142,19 +152,23 @@ namespace sampnode
 				L_INFO << sourceline_string;
 			}
 		}
-		else {
+		else
+		{
 			try_catch.Reset();
 			v8::Local<v8::Value> result = script->Run();
-			if (try_catch.HasCaught()) {
+			if (try_catch.HasCaught())
+			{
 				isolate->CancelTerminateExecution();
 				v8::String::Utf8Value exception(try_catch.Exception());
 				const char* exception_string = *exception;
 				v8::Local<v8::Message> message = try_catch.Message();
 
-				if (message.IsEmpty()) {
+				if (message.IsEmpty())
+				{
 					L_ERROR << exception_string;
 				}
-				else {
+				else
+				{
 					v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
 					const char* filename_string = *filename;
 					int linenum = message->GetLineNumber();
@@ -170,7 +184,6 @@ namespace sampnode
 
 			return handle_scope.Escape(result);
 		}
-
 		return v8::Local<v8::Value>();
 	}
 
