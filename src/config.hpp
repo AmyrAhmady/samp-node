@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <yaml-cpp/yaml.h>
 #include "json.hpp"
@@ -23,17 +24,16 @@ namespace sampnode
 		Config();
 		~Config();
 
-		bool ParseFile();
-		bool ParseYamlFile();
-		bool ParseJsonFile();
+		bool ParseFile(const std::string& path);
+		bool ParseYamlFile(const std::string& path);
+		bool ParseJsonFile(const std::string& path);
 
 		template<typename T, typename... args>
 		T get_as(const args&... keys);
 
-		Props_t& Props();
+		Props_t ReadAsMainConfig();
 
 	private:
-		Props_t props;
 		json jsonObject;
 		YAML::Node yamlObject;
 		bool usingJson = true;

@@ -39,12 +39,11 @@ namespace sampnode
 	v8::Isolate* g_isolate;
 	node::Environment* m_nodeEnvironment;
 
-	bool node_init()
+	bool node_init(const Props_t& configProps)
 	{
-		const Props_t& config = Config::Get()->Props();
 #ifdef WIN32
 		{
-			const std::string& workspace = config.working_dir + ";$NODE_PATH";
+			const std::string& workspace = configProps.workspace_path + ";$NODE_PATH";
 			// for future
 		}
 #else
@@ -53,18 +52,18 @@ namespace sampnode
 			// for future
 		}
 #endif
-		const std::string& entryFile = config.entry_file;
+		const std::string& entryFile = configProps.entry_file;
 		std::vector<const char*> argvv;
-        argvv.push_back("node");
+		argvv.push_back("node");
 
-		const std::vector<std::string>& node_flags = config.node_flags;
-        for (auto& flag : node_flags)
-        {
-            argvv.push_back(flag.c_str());
-        }
+		const std::vector<std::string>& node_flags = configProps.node_flags;
+		for (auto& flag : node_flags)
+		{
+			argvv.push_back(flag.c_str());
+		}
 
-        argvv.push_back(entryFile.c_str());
-		int argc = argvv.size();	
+		argvv.push_back(entryFile.c_str());
+		int argc = argvv.size();
 
 		for (int i = 0; i < argc; i++)
 		{

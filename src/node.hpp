@@ -1,5 +1,6 @@
 #pragma once
 #include "utils.hpp"
+#include "config.hpp"
 
 namespace sampnode
 {
@@ -11,7 +12,7 @@ namespace sampnode
 		REFERENCE_ERROR
 	};
 
-	bool node_init();
+	bool node_init(const Props_t& configProps);
 	void node_tick();
 	void node_stop();
 	v8::Local<v8::Value> node_execute_code(const std::string& source, const std::string& name);

@@ -10,41 +10,31 @@ using json = nlohmann::json;
 
 namespace sampnode
 {
-	static const std::string CONFIG_FILE_NAME = "samp-node";
-
-	bool Config::ParseFile()
+	bool Config::ParseFile(const std::string& path)
 	{
-		if (!ParseJsonFile())
+		if (!ParseJsonFile(path))
 		{
-			if (!ParseYamlFile())
+			if (!ParseYamlFile(path))
 			{
 				return false;
 			}
 			else
 			{
 				usingJson = false;
-				L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".yml config file";
+				L_INFO << "plugin is using " << path << ".yml config file";
 			}
 		}
 		else
 		{
 			usingJson = true;
-			L_INFO << "plugin is using " << CONFIG_FILE_NAME << ".json config file";
+			L_INFO << "plugin is using " << path << ".json config file";
 		}
-
-		props.entry_file = get_as<std::string>("entry_file");
-		props.workspace_path = get_as<std::string>("workspace_path");
-		props.resources_path = get_as<std::string>("resources_path");
-		props.resources = get_as<std::vector<std::string>>("resources");
-		props.node_flags = get_as<std::vector<std::string>>("node_flags");
-		props.log_level = static_cast<LogLevel>(get_as<int>("log_level"));
-
 		return true;
 	}
 
-	bool Config::ParseJsonFile()
+	bool Config::ParseJsonFile(const std::string& path)
 	{
-		std::ifstream jsonFile(CONFIG_FILE_NAME + ".json");
+		std::ifstream jsonFile(path + ".json");
 
 		if (!jsonFile.good())
 		{
@@ -62,13 +52,13 @@ namespace sampnode
 		return false;
 	}
 
-	bool Config::ParseYamlFile()
+	bool Config::ParseYamlFile(const std::string& path)
 	{
 		YAML::Node object;
 
 		try
 		{
-			object = YAML::LoadFile(CONFIG_FILE_NAME + ".yml");
+			object = YAML::LoadFile(path + ".yml");
 		}
 		catch (const YAML::ParserException & e)
 		{
@@ -86,6 +76,18 @@ namespace sampnode
 			return true;
 		}
 		return false;
+	}
+
+	Props_t Config::ReadAsMainConfig()
+	{
+		return Props_t{
+			get_as<std::string>("entry_file"),
+			get_as<std::string>("workspace_path"),
+			get_as<std::string>("resources_path"),
+			get_as<std::vector<std::string>>("resources"),
+			get_as<std::vector<std::string>>("node_flags"),
+			static_cast<LogLevel>(get_as<int>("log_level"))
+		};
 	}
 
 	template<typename T, typename... args>
@@ -126,11 +128,6 @@ namespace sampnode
 			}
 			return tempYamlObj.as<T>();
 		}
-	}
-
-	Props_t& Config::Props()
-	{
-		return props;
 	}
 
 	Config::Config()
