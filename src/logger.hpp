@@ -18,7 +18,9 @@ enum class LogLevel
 class Log
 {
 public:
-	static void Init();
+	static LogLevel logLevel;
+
+	static void Init(LogLevel level);
 
 	Log();
 	virtual ~Log();

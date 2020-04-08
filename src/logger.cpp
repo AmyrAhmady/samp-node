@@ -4,8 +4,11 @@
 #include "logger.hpp"
 #include "config.hpp"
 
-void Log::Init()
+LogLevel Log::logLevel;
+
+void Log::Init(LogLevel level)
 {
+	logLevel = level;
 	char chLogBuff[128];
 	char timestamp_buff[30];
 	struct tm* current_tm;
@@ -28,7 +31,7 @@ void Log::Init()
 std::ostringstream& Log::Get(LogLevel level)
 {
 	currentLevel = level;
-	if (sampnode::Config::Get()->Props().log_level > level)
+	if (logLevel > level)
 	{
 		time_t curr_time;
 		curr_time = time(NULL);
@@ -57,7 +60,7 @@ Log::Log()
 
 Log::~Log()
 {
-	if (sampnode::Config::Get()->Props().log_level > currentLevel)
+	if (logLevel > currentLevel)
 	{
 		os << std::endl;
 
