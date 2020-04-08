@@ -33,8 +33,8 @@ namespace sampnode
 		}
 
 		props.entry_file = get_as<std::string>("entry_file");
-		props.working_dir = get_as<std::string>("working_dir");
-		props.resource_folder = get_as<std::string>("resource_folder");
+		props.workspace_path = get_as<std::string>("workspace_path");
+		props.resources_path = get_as<std::string>("resources_path");
 		props.resources = get_as<std::vector<std::string>>("resources");
 		props.node_flags = get_as<std::vector<std::string>>("node_flags");
 		props.log_level = static_cast<LogLevel>(get_as<int>("log_level"));
