@@ -41,17 +41,6 @@ namespace sampnode
 
 	bool node_init(const Props_t& configProps)
 	{
-#ifdef WIN32
-		{
-			const std::string& workspace = configProps.workspace_path + ";$NODE_PATH";
-			// for future
-		}
-#else
-		{
-			const std::string& workspace = configProps.working_dir + ":$NODE_PATH";
-			// for future
-		}
-#endif
 		const std::string& entryFile = configProps.entry_file;
 		std::vector<const char*> argvv;
 		argvv.push_back("node");
