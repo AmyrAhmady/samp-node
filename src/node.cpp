@@ -48,7 +48,7 @@ namespace sampnode
 		}
 #else
 		{
-			const std::string& workspace = config.working_dir + ":$NODE_PATH";
+			const std::string& workspace = configProps.working_dir + ":$NODE_PATH";
 			// for future
 		}
 #endif
@@ -106,8 +106,8 @@ namespace sampnode
 
 	void node_run_code(const std::string& source)
 	{
-		v8::Handle<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
-		v8::Handle<v8::Script>& script = v8::Script::Compile(sourceV8String);
+		const v8::Local<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
+		v8::Local<v8::Script> script = v8::Script::Compile(sourceV8String);
 		script->Run();
 	}
 
