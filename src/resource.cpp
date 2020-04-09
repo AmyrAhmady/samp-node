@@ -70,6 +70,9 @@ namespace sampnode
 		sampnode::functions::init(GetV8Isolate(), global);
 		sampnode::callback::add_event_definitions(GetV8Isolate(), global);
 
+		// create a global variable for resource
+		v8val::add_definition("__resname", name, global);
+
 		v8::Local<v8::Context> _context = v8::Context::New(GetV8Isolate(), nullptr, global);
 		context.Reset(GetV8Isolate(), _context);
 		v8::Context::Scope scope(_context);
