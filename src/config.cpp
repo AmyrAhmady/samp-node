@@ -38,6 +38,7 @@ namespace sampnode
 
 		if (!jsonFile.good())
 		{
+			L_INFO << "unable to locate JSON config file at " << path + ".json, trying YAML now";
 			return false;
 		}
 
