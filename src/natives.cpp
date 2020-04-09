@@ -6,7 +6,6 @@
 #include "amx/amx2.h"
 #include "common.hpp"
 #include "v8.h"
-#include "node.hpp"
 #include "natives.hpp"
 #include "sampgdk.h"
 

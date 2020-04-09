@@ -11,7 +11,6 @@ namespace sampnode
 	struct Props_t
 	{
 		std::string entry_file;
-		std::string workspace_path;
 		std::string resources_path;
 		std::vector<std::string> node_flags;
 		std::vector<std::string> resources;
