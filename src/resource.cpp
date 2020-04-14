@@ -37,15 +37,26 @@ namespace sampnode
 
 	void Resource::Init()
 	{
-		Config configFile;
-		if (!configFile.ParseFile(path + "/resource-config"))
+		std::string entryFile;
+		std::vector<std::string> node_flags;
+		Props_t& mainConfig = nodeImpl.GetMainConfig();
+		if (mainConfig.enable_resources && path != "no_resource")
 		{
-			L_ERROR << "Unable to load config file of resource " << name;
-			return;
-		}
+			Config configFile;
+			if (!configFile.ParseFile(path + "/resource-config"))
+			{
+				L_ERROR << "Unable to load config file of resource " << name;
+				return;
+			}
 
-		const std::string& entryFile = path + "/" + configFile.get_as<std::string>("entry_file");
-		const std::vector<std::string>& node_flags = configFile.get_as<std::vector<std::string>>("node_flags");
+			entryFile = path + "/" + configFile.get_as<std::string>("entry_file");
+			node_flags = configFile.get_as<std::vector<std::string>>("node_flags");
+		}
+		else
+		{
+			entryFile = mainConfig.entry_file;
+			node_flags = mainConfig.node_flags;
+		}
 
 		std::vector<const char*> argvv;
 		argvv.push_back("node");

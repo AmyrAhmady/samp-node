@@ -18,12 +18,12 @@ namespace sampnode
 	public:
 		static std::unordered_map<node::Environment*, std::shared_ptr<Resource>> resourcesPool;
 
-		static void LoadAllResources(const std::vector<std::string>& resources);
+		static void LoadAllResources(const std::vector<std::string>& resources, bool enable_resources = true);
 
 		NodeImpl();
 		~NodeImpl();
 
-		void Initialize(const Props_t& mainConfig);
+		void Initialize(const Props_t& config);
 		bool LoadResource(const std::string& name);
 		bool UnloadResource(const std::string& name);
 		bool ReloadResource(const std::string& name);
@@ -48,9 +48,9 @@ namespace sampnode
 			return nodeLoop.get();
 		}
 
-		inline std::string& GetResourcesPath()
+		inline Props_t& GetMainConfig()
 		{
-			return resourcesPath;
+			return mainConfig;
 		}
 
 		inline void Tick()
@@ -72,7 +72,7 @@ namespace sampnode
 		std::unique_ptr<v8::Platform> v8Platform;
 		std::unique_ptr<v8::ArrayBuffer::Allocator> arrayBufferAllocator;
 		std::unique_ptr<UvLoop> nodeLoop;
-		std::string resourcesPath;
+		Props_t mainConfig;
 		std::unordered_map<std::string, node::Environment*> resourceNamesPool;
 	};
 

@@ -83,6 +83,7 @@ namespace sampnode
 	{
 		return Props_t{
 			get_as<std::string>("entry_file"),
+			get_as<bool>("enable_resources"),
 			get_as<std::string>("resources_path"),
 			get_as<std::vector<std::string>>("node_flags"),
 			get_as<std::vector<std::string>>("resources"),

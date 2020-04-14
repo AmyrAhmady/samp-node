@@ -56,7 +56,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
 	sampnode::nodeImpl.Initialize(mainConfigData);
-	sampnode::nodeImpl.LoadAllResources(mainConfigData.resources);
+	sampnode::nodeImpl.LoadAllResources(mainConfigData.resources, mainConfigData.enable_resources);
 	return true;
 }
 

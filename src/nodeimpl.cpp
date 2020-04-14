@@ -21,11 +21,18 @@ namespace sampnode
 	NodeImpl nodeImpl;
 	std::unordered_map<node::Environment*, std::shared_ptr<Resource>> NodeImpl::resourcesPool;
 
-	void NodeImpl::LoadAllResources(const std::vector<std::string>& resources)
+	void NodeImpl::LoadAllResources(const std::vector<std::string>& resources, bool enable_resources)
 	{
-		for (auto& resource : resources)
+		if (enable_resources)
 		{
-			nodeImpl.LoadResource(resource);
+			for (auto& resource : resources)
+			{
+				nodeImpl.LoadResource(resource);
+			}
+		}
+		else
+		{
+			nodeImpl.LoadResource("");
 		}
 	}
 
@@ -35,9 +42,9 @@ namespace sampnode
 	NodeImpl::~NodeImpl()
 	{}
 
-	void NodeImpl::Initialize(const Props_t& mainConfig)
+	void NodeImpl::Initialize(const Props_t& config)
 	{
-		resourcesPath = mainConfig.resources_path;
+		mainConfig = config;
 		auto platform = node::InitializeV8Platform(4);
 		v8Platform = std::unique_ptr<v8::Platform>(platform);
 
@@ -80,11 +87,22 @@ namespace sampnode
 
 	bool NodeImpl::LoadResource(const std::string& name)
 	{
-		std::shared_ptr<Resource> resource = std::make_shared<Resource>(name, resourcesPath + "/" + name);
-		resource->Init();
-		resourcesPool.insert({ resource->GetEnv(), resource });
-		resourceNamesPool.insert({ name, resource->GetEnv() });
-		return true;
+		if (mainConfig.enable_resources)
+		{
+			std::shared_ptr<Resource> resource = std::make_shared<Resource>(name, "./" + mainConfig.resources_path + "/" + name);
+			resource->Init();
+			resourcesPool.insert({ resource->GetEnv(), resource });
+			resourceNamesPool.insert({ name, resource->GetEnv() });
+			return true;
+		}
+		else
+		{
+			std::shared_ptr<Resource> resource = std::make_shared<Resource>("main", "no_resource");
+			resource->Init();
+			resourcesPool.insert({ resource->GetEnv(), resource });
+			resourceNamesPool.insert({ name, resource->GetEnv() });
+			return true;
+		}
 	}
 
 	bool NodeImpl::UnloadResource(const std::string& name)
