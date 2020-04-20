@@ -90,7 +90,7 @@ namespace sampnode
 					for (unsigned int i = 0; i < funcArray->Length(); i++)
 					{
 						const v8::Local<v8::Function>& function = funcArray->Get(i).As<v8::Function>();
-						for (auto& element : _event->functionList) 
+						for (auto& element : _event->functionList)
 						{
 							if (element.function.Get(info.GetIsolate()) == function)
 							{
@@ -149,8 +149,8 @@ namespace sampnode
 
 	event::event(const std::string& eventName, const std::string& param_types)
 		: name(eventName),
-		  paramTypes(param_types),
-		  functionList(std::vector<EventListener_t>())
+		paramTypes(param_types),
+		functionList(std::vector<EventListener_t>())
 	{
 	}
 
@@ -165,16 +165,16 @@ namespace sampnode
 	}
 
 	void event::append(const v8::Local<v8::Function>& function)
-	{		
+	{
 		v8::Isolate* isolate = function->GetIsolate();
-	
-		bool result = std::any_of(functionList.cbegin(), functionList.cend(), 
-			[&function, &isolate](const EventListener_t &listener) 
-		{
-			return listener.function.Get(isolate) == function;
-		});
 
-		if(result)
+		bool result = std::any_of(functionList.cbegin(), functionList.cend(),
+			[&function, &isolate](const EventListener_t& listener)
+			{
+				return listener.function.Get(isolate) == function;
+			});
+
+		if (result)
 		{
 			return;
 		}
@@ -226,7 +226,7 @@ namespace sampnode
 				v8::String::Utf8Value str(listener.isolate, eh.Exception());
 				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
 
-				L_ERROR << "Event handling function in resource: " << *str <<"\nstack:\n" << *stack << "\n";
+				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 			}
 		}
 	}

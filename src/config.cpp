@@ -61,7 +61,7 @@ namespace sampnode
 		{
 			object = YAML::LoadFile(path + ".yml");
 		}
-		catch (const YAML::ParserException & e)
+		catch (const YAML::ParserException& e)
 		{
 			L_ERROR << "Could not parse the config file: " << e.what();
 			return false;

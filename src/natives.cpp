@@ -200,7 +200,7 @@ namespace sampnode
 				vars++;
 			}
 			break;
-			
+
 			case 'S':
 			{
 
@@ -624,7 +624,7 @@ namespace sampnode
 			{
 				args.GetReturnValue().Set(static_cast<double>(amx_ctof(retval)));
 			}
-				
+
 		}
 		else
 		{
