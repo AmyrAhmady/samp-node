@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <utility>
+#include <amx/amx.h>
 #include "v8.h"
 
 namespace utils {
@@ -39,4 +40,8 @@ namespace utils {
 		return tokens;
 	}
 
+	inline cell* get_amxaddr(AMX* amx, cell amx_addr)
+	{
+		return (cell*)(amx->base + (int)(((AMX_HEADER*)amx->base)->dat + amx_addr));
+	}
 }

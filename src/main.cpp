@@ -11,6 +11,12 @@
 
 logprintf_t logprintf;
 
+const AMX_NATIVE_INFO native_list[] =
+{
+	{ "SAMPNode_CallEvent", sampnode::event::pawn_call_event },
+	{ 0, 0 }
+};
+
 PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX* amx, const char* name, cell* params, cell* retval)
 {
 	if (sampnode::js_calling_public)
@@ -63,7 +69,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx)
 {
 	sampnode::amx::load(amx);
-	return 1;
+	return amx_Register(amx, native_list, -1);;
 }
 
 PLUGIN_EXPORT void PLUGIN_CALL Unload()

@@ -147,6 +147,20 @@ namespace sampnode
 		}
 	}
 
+	cell event::pawn_call_event(AMX* amx, cell* params)
+	{
+		char* eventName_c;
+		amx_StrParam(amx, params[1], eventName_c);
+		const std::string eventName(eventName_c);
+
+		auto& _event = events.find(eventName);
+		if (_event == events.end()) return 0;
+
+		cell retVal = 0;
+		_event->second->call_from_pawn_native(amx, params + 1, &retVal);
+		return retVal;
+	}
+
 	event::event(const std::string& eventName, const std::string& param_types)
 		: name(eventName),
 		paramTypes(param_types),
@@ -245,7 +259,7 @@ namespace sampnode
 			v8::Local<v8::Value>* argv = NULL;
 			unsigned int argc = paramTypes.length();
 			argv = new v8::Local<v8::Value>[argc];
-			size_t param_count = params[0] / sizeof(cell);
+
 			for (unsigned int i = 0; i < argc; i++)
 			{
 				switch (paramTypes[i])
@@ -270,6 +284,44 @@ namespace sampnode
 					argv[i] = v8::String::NewFromUtf8(isolate, sval);
 					break;
 				}
+				case 'a':
+				{
+					cell* array = NULL;
+					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get array address: " << name.c_str();
+						return;
+					}
+					int size = params[i + 2];
+					L_INFO << "Array size: " << size;
+					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
+					for (int j = 0; j < size; j++)
+					{
+						jsArray->Set(j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
+					}
+					argv[i] = jsArray;
+					i++;
+					break;
+				}
+				case 'v':
+				{
+					cell* array = NULL;
+					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get float array address: " << name.c_str();
+						return;
+					}
+
+					int size = params[i + 2];
+					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
+					for (int j = 0; j < size; j++)
+					{
+						jsArray->Set(j, v8::Integer::New(isolate, amx_ctof(array[j])));
+					}
+					argv[i] = jsArray;
+					i++;
+					break;
+				}
 				case 'd':
 				{
 					argv[i] = v8::Integer::New(isolate, static_cast<int32_t>(params[i + 1]));
@@ -277,7 +329,7 @@ namespace sampnode
 				}
 				case 'i':
 				{
-					argv[i] = v8::Integer::New(isolate, static_cast<uint16_t>(params[i + 1]));
+					argv[i] = v8::Integer::New(isolate, static_cast<uint32_t>(params[i + 1]));
 					break;
 				}
 				case 'f':
@@ -289,11 +341,121 @@ namespace sampnode
 			}
 
 			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
-			function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
+			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
 
+			int cppIntReturnValue = returnValue->Int32Value();
 			if (argc > 0) delete[] argv;
-			int retvalue = 1;
-			if (retval != nullptr) *retval = static_cast<cell>(retvalue);
+			if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
+			if (eh.HasCaught())
+			{
+				v8::String::Utf8Value str(listener.isolate, eh.Exception());
+				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
+
+				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
+			}
+		}
+	}
+
+	void event::call_from_pawn_native(AMX* amx, cell* params, cell* retval)
+	{
+		for (auto& listener : functionList)
+		{
+			v8::Isolate* isolate = listener.isolate;
+			//v8::Locker v8Locker(listener.isolate);
+			v8::HandleScope hs(listener.isolate);
+			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
+			v8::Context::Scope cs(ctx);
+			v8::TryCatch eh(listener.isolate);
+
+			v8::Local<v8::Value>* argv = NULL;
+			unsigned int argc = paramTypes.length();
+			argv = new v8::Local<v8::Value>[argc];
+
+			for (unsigned int i = 0; i < argc; i++)
+			{
+				switch (paramTypes[i])
+				{
+				case 's':
+				{
+					cell* maddr = NULL;
+					int len = 0;
+					char* sval;
+					if (amx_GetAddr(amx, params[i + 1], &maddr) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get string address: " << name.c_str();
+						return;
+					}
+					amx_StrLen(maddr, &len);
+					sval = new char[len + 1];
+					if (amx_GetString(sval, maddr, 0, len + 1) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get string address: " << name.c_str();
+						return;
+					}
+					argv[i] = v8::String::NewFromUtf8(isolate, sval);
+					break;
+				}
+				case 'a':
+				{
+					cell* array = NULL;
+					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get array address: " << name.c_str();
+						return;
+					}
+					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + 2]));
+					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
+					for (int j = 0; j < size; j++)
+					{
+						jsArray->Set(j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
+					}
+					argv[i] = jsArray;
+					i++;
+					break;
+				}
+				case 'v':
+				{
+					cell* array = NULL;
+					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					{
+						L_ERROR << "Can't get float array address: " << name.c_str();
+						return;
+					}
+
+					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + 2]));
+					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
+					for (int j = 0; j < size; j++)
+					{
+						jsArray->Set(j, v8::Integer::New(isolate, amx_ctof(array[j])));
+					}
+					argv[i] = jsArray;
+					i++;
+					break;
+				}
+				case 'd':
+				{
+					argv[i] = v8::Integer::New(isolate, static_cast<int32_t>(*utils::get_amxaddr(amx, params[i + 1])));
+					break;
+				}
+				case 'i':
+				{
+					argv[i] = v8::Integer::New(isolate, static_cast<uint32_t>(*utils::get_amxaddr(amx, params[i + 1])));
+					break;
+				}
+				case 'f':
+				{
+					argv[i] = v8::Number::New(isolate, amx_ctof(*utils::get_amxaddr(amx, params[i + 1])));
+					break;
+				}
+				}
+			}
+
+			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
+			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
+
+			int cppIntReturnValue = returnValue->Int32Value();
+			if (argc > 0) delete[] argv;
+			if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			if (eh.HasCaught())
 			{
 				v8::String::Utf8Value str(listener.isolate, eh.Exception());
