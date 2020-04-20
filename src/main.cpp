@@ -4,7 +4,7 @@
 #include "callbacks.hpp"
 #include "events.hpp"
 #include "amxhandler.hpp"
-#include "node.hpp"
+#include "nodeimpl.hpp"
 #include <sampgdk.h>
 #include "common.hpp"
 #include "config.hpp"
@@ -26,7 +26,7 @@ PLUGIN_EXPORT bool PLUGIN_CALL OnPublicCall(AMX* amx, const char* name, cell* pa
 PLUGIN_EXPORT void PLUGIN_CALL ProcessTick()
 {
 	sampgdk::ProcessTick();
-	sampnode::node_tick();
+	sampnode::nodeImpl.Tick();
 	return;
 }
 
@@ -55,7 +55,8 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void** ppData)
 
 	sampgdk::Load(ppData);
 	sampnode::callback::init();
-	sampnode::node_init(mainConfigData);
+	sampnode::nodeImpl.Initialize(mainConfigData);
+	sampnode::nodeImpl.LoadAllResources(mainConfigData.resources, mainConfigData.enable_resources);
 	return true;
 }
 
@@ -68,7 +69,7 @@ PLUGIN_EXPORT int PLUGIN_CALL AmxLoad(AMX* amx)
 PLUGIN_EXPORT void PLUGIN_CALL Unload()
 {
 	sampgdk::Unload();
-	sampnode::node_stop();
+	sampnode::nodeImpl.Stop();
 	return;
 }
 

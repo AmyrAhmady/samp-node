@@ -6,7 +6,7 @@
 
 #include "v8.h"
 #include "logger.hpp"
-#include "node.hpp"
+#include "resource.hpp"
 #include "events.hpp"
 #include "callbacks.hpp"
 #include "amx/amx.h"
@@ -94,7 +94,7 @@ namespace sampnode
 	{
 		for (auto& callback : sampCallbacks)
 		{
-			v8val::add_definition(callback.alias, callback.name, global);
+			sampnode::v8val::add_definition(callback.alias, callback.name, global);
 		}
 	}
 

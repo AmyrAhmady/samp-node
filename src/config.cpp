@@ -38,6 +38,7 @@ namespace sampnode
 
 		if (!jsonFile.good())
 		{
+			L_INFO << "unable to locate JSON config file at " << path + ".json, trying YAML now";
 			return false;
 		}
 
@@ -82,10 +83,10 @@ namespace sampnode
 	{
 		return Props_t{
 			get_as<std::string>("entry_file"),
-			get_as<std::string>("workspace_path"),
+			get_as<bool>("enable_resources"),
 			get_as<std::string>("resources_path"),
-			get_as<std::vector<std::string>>("resources"),
 			get_as<std::vector<std::string>>("node_flags"),
+			get_as<std::vector<std::string>>("resources"),
 			static_cast<LogLevel>(get_as<int>("log_level"))
 		};
 	}

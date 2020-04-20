@@ -1,51 +1,66 @@
-#define NODE_WANT_INTERNALS 1
-#define USING_UV_SHARED 1
-
-#include "node.h"
-#include "env.h"
-#include "env-inl.h"
-#include "v8.h"
-#include "uv.h"
-#include "node.h"
-#include "libplatform/libplatform.h"
-#include "node.hpp"
+#include "resource.hpp"
 #include "functions.hpp"
 #include "callbacks.hpp"
 #include "events.hpp"
-#include "v8impl.hpp"
+#include "nodeimpl.hpp"
 #include "logger.hpp"
 #include "config.hpp"
 
-static V8ScriptGlobals g_v8;
-
 v8::Isolate* GetV8Isolate()
 {
-	return g_v8.GetIsolate();
+	return sampnode::nodeImpl.GetIsolate();
 }
 
 static v8::Platform* GetV8Platform()
 {
-	return g_v8.GetPlatform();
+	return sampnode::nodeImpl.GetPlatform();
 }
 
 static node::IsolateData* GetNodeIsolate()
 {
-	return g_v8.GetNodeIsolate();
+	return sampnode::nodeImpl.GetNodeIsolate();
 }
 
 namespace sampnode
 {
-	v8::UniquePersistent<v8::Context> m_context;
-	v8::Isolate* g_isolate;
-	node::Environment* m_nodeEnvironment;
 
-	bool node_init(const Props_t& configProps)
+	Resource::Resource(const std::string& name, const std::string& path) : name(name), path(path)
+	{}
+
+	Resource::Resource()
+	{}
+
+	Resource::~Resource()
 	{
-		const std::string& entryFile = configProps.entry_file;
+		Stop();
+	}
+
+	void Resource::Init()
+	{
+		std::string entryFile;
+		std::vector<std::string> node_flags;
+		Props_t& mainConfig = nodeImpl.GetMainConfig();
+		if (mainConfig.enable_resources && path != "no_resource")
+		{
+			Config configFile;
+			if (!configFile.ParseFile(path + "/resource-config"))
+			{
+				L_ERROR << "Unable to load config file of resource " << name;
+				return;
+			}
+
+			entryFile = path + "/" + configFile.get_as<std::string>("entry_file");
+			node_flags = configFile.get_as<std::vector<std::string>>("node_flags");
+		}
+		else
+		{
+			entryFile = mainConfig.entry_file;
+			node_flags = mainConfig.node_flags;
+		}
+
 		std::vector<const char*> argvv;
 		argvv.push_back("node");
 
-		const std::vector<std::string>& node_flags = configProps.node_flags;
 		for (auto& flag : node_flags)
 		{
 			argvv.push_back(flag.c_str());
@@ -59,10 +74,6 @@ namespace sampnode
 			L_DEBUG << "node flags: " << argvv[i];
 		}
 
-		int exec_argc;
-		const char** exec_argv;
-		g_v8.Initialize(&argc, argvv.data(), &exec_argc, &exec_argv);
-
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
 		v8::HandleScope handleScope(GetV8Isolate());
 
@@ -70,44 +81,41 @@ namespace sampnode
 		sampnode::functions::init(GetV8Isolate(), global);
 		sampnode::callback::add_event_definitions(GetV8Isolate(), global);
 
-		v8::Local<v8::Context> context = v8::Context::New(GetV8Isolate(), nullptr, global);
-		m_context.Reset(GetV8Isolate(), context);
-		v8::Context::Scope scope(context);
+		// create a global variable for resource
+		v8val::add_definition("__resname", name, global);
 
-		auto env = node::CreateEnvironment(GetNodeIsolate(), context, argc, (char**)argvv.data(), 0, nullptr);
+		v8::Local<v8::Context> _context = v8::Context::New(GetV8Isolate(), nullptr, global);
+		context.Reset(GetV8Isolate(), _context);
+		v8::Context::Scope scope(_context);
+
+		auto env = node::CreateEnvironment(GetNodeIsolate(), _context, argc, (char**)argvv.data(), 0, nullptr);
 		node::LoadEnvironment(env);
-		m_nodeEnvironment = env;
+		nodeEnvironment = env;
 
-		return true;
+		return;
 	}
 
-	void node_tick()
+	void Resource::Stop()
 	{
-		//v8::platform::PumpMessageLoop(GetV8Platform(), GetV8Isolate());
-		uv_run(g_v8.GetUVLoop()->GetLoop(), UV_RUN_NOWAIT);
+		node::FreeEnvironment(nodeEnvironment);
+		context.Reset();
 	}
 
-	void node_stop()
-	{
-		node::FreeEnvironment(m_nodeEnvironment);
-		m_context.Reset();
-	}
-
-	void node_run_code(const std::string& source)
+	void Resource::RunCode(const std::string& source)
 	{
 		const v8::Local<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
 		v8::Local<v8::Script> script = v8::Script::Compile(sourceV8String);
 		script->Run();
 	}
 
-	v8::Local<v8::Value> node_add_module(const std::string& source, const std::string& name)
+	v8::Local<v8::Value> Resource::AddModule(const std::string& source, const std::string& name)
 	{
 		v8::Isolate* isolate = GetV8Isolate();
 		//v8::Locker v8Locker(isolate);
 		v8::Isolate::Scope isolate_scope(isolate);
 		v8::HandleScope hs(isolate);
 		v8::EscapableHandleScope handle_scope(isolate);
-		v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, m_context);
+		v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, context);
 		v8::Context::Scope context_scope(ctx);
 
 		auto scriptname = v8::String::NewFromUtf8(isolate, name.c_str());
@@ -174,52 +182,6 @@ namespace sampnode
 			return handle_scope.Escape(result);
 		}
 		return v8::Local<v8::Value>();
-	}
-
-	void node_throw_exception(const std::string& text, ExceptionType type)
-	{
-		v8::Isolate* isolate = GetV8Isolate();
-		if (type == ExceptionType::REGULAR_ERROR)
-		{
-			isolate->ThrowException(
-				v8::Exception::Error(
-					v8::String::NewFromUtf8(isolate, text.c_str())
-				)
-			);
-		}
-		else if (type == ExceptionType::REFERENCE_ERROR)
-		{
-			isolate->ThrowException(
-				v8::Exception::ReferenceError(
-					v8::String::NewFromUtf8(isolate, text.c_str())
-				)
-			);
-		}
-		else if (type == ExceptionType::RANGE_ERROR)
-		{
-			isolate->ThrowException(
-				v8::Exception::RangeError(
-					v8::String::NewFromUtf8(isolate, text.c_str())
-				)
-			);
-		}
-		else if (type == ExceptionType::TYPE_ERROR)
-		{
-			isolate->ThrowException(
-				v8::Exception::TypeError(
-					v8::String::NewFromUtf8(isolate, text.c_str())
-				)
-			);
-		}
-		else if (type == ExceptionType::SYNTAX_ERROR)
-		{
-			isolate->ThrowException(
-				v8::Exception::SyntaxError(
-					v8::String::NewFromUtf8(isolate, text.c_str())
-				)
-			);
-		}
-
 	}
 
 	void v8val::add_definition(const std::string& name, const std::string& value, v8::Local<v8::ObjectTemplate>& global)
