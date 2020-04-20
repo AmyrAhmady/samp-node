@@ -153,7 +153,7 @@ namespace sampnode
 		amx_StrParam(amx, params[1], eventName_c);
 		const std::string eventName(eventName_c);
 
-		auto& _event = events.find(eventName);
+		const auto& _event = events.find(eventName);
 		if (_event == events.end()) return 0;
 
 		cell retVal = 0;
