@@ -370,6 +370,7 @@ namespace sampnode
 			v8::Local<v8::Value>* argv = NULL;
 			unsigned int argc = paramTypes.length();
 			argv = new v8::Local<v8::Value>[argc];
+			int paramOffset = 0;
 
 			for (unsigned int i = 0; i < argc; i++)
 			{
@@ -380,7 +381,7 @@ namespace sampnode
 					cell* maddr = NULL;
 					int len = 0;
 					char* sval;
-					if (amx_GetAddr(amx, params[i + 1], &maddr) != AMX_ERR_NONE)
+					if (amx_GetAddr(amx, params[i + paramOffset + 1], &maddr) != AMX_ERR_NONE)
 					{
 						L_ERROR << "Can't get string address: " << name.c_str();
 						return;
@@ -398,53 +399,53 @@ namespace sampnode
 				case 'a':
 				{
 					cell* array = NULL;
-					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					if (amx_GetAddr(amx, params[i + paramOffset + 1], &array) != AMX_ERR_NONE)
 					{
 						L_ERROR << "Can't get array address: " << name.c_str();
 						return;
 					}
-					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + 2]));
+					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + paramOffset + 2]));
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
 						jsArray->Set(j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
 					}
 					argv[i] = jsArray;
-					i++;
+					paramOffset++;
 					break;
 				}
 				case 'v':
 				{
 					cell* array = NULL;
-					if (amx_GetAddr(amx, params[i + 1], &array) != AMX_ERR_NONE)
+					if (amx_GetAddr(amx, params[i + paramOffset + 1], &array) != AMX_ERR_NONE)
 					{
 						L_ERROR << "Can't get float array address: " << name.c_str();
 						return;
 					}
 
-					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + 2]));
+					int size = static_cast<int>(*utils::get_amxaddr(amx, params[i + paramOffset + 2]));
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
 						jsArray->Set(j, v8::Integer::New(isolate, amx_ctof(array[j])));
 					}
 					argv[i] = jsArray;
-					i++;
+					paramOffset++;
 					break;
 				}
 				case 'd':
 				{
-					argv[i] = v8::Integer::New(isolate, static_cast<int32_t>(*utils::get_amxaddr(amx, params[i + 1])));
+					argv[i] = v8::Integer::New(isolate, static_cast<int32_t>(*utils::get_amxaddr(amx, params[i + paramOffset + 1])));
 					break;
 				}
 				case 'i':
 				{
-					argv[i] = v8::Integer::New(isolate, static_cast<uint32_t>(*utils::get_amxaddr(amx, params[i + 1])));
+					argv[i] = v8::Integer::New(isolate, static_cast<uint32_t>(*utils::get_amxaddr(amx, params[i + paramOffset + 1])));
 					break;
 				}
 				case 'f':
 				{
-					argv[i] = v8::Number::New(isolate, amx_ctof(*utils::get_amxaddr(amx, params[i + 1])));
+					argv[i] = v8::Number::New(isolate, amx_ctof(*utils::get_amxaddr(amx, params[i + paramOffset + 1])));
 					break;
 				}
 				}
