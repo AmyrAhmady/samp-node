@@ -2,7 +2,6 @@
 a SA-MP plugin to support nodejs apps and run them on your server
 
 ---------
-Somwhat usable now, please check our wiki: [Click Here](https://github.com/AmyrAhmady/samp-node/wiki)
 
 Todo: 
 - [ ] Add samp constant values (eg: INVALID_PLAYER_ID, MAX_TEXT_DRAWS, and etc...)
