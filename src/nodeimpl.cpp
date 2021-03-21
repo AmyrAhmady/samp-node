@@ -16,6 +16,27 @@ public:
 	virtual void Free(void* data, size_t) override { free(data); }
 };
 
+void OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error)
+{
+	v8::String::Utf8Value messageStr(sampnode::nodeImpl.GetIsolate(), message->Get());
+	v8::String::Utf8Value errorStr(sampnode::nodeImpl.GetIsolate(), error);
+
+	std::stringstream stack;
+	auto stackTrace = message->GetStackTrace();
+
+	for (int i = 0; i < stackTrace->GetFrameCount(); i++)
+	{
+		auto frame = stackTrace->GetFrame(sampnode::nodeImpl.GetIsolate(), i);
+
+		v8::String::Utf8Value sourceStr(sampnode::nodeImpl.GetIsolate(), frame->GetScriptNameOrSourceURL());
+		v8::String::Utf8Value functionStr(sampnode::nodeImpl.GetIsolate(), frame->GetFunctionName());
+
+		stack << *sourceStr << "(" << frame->GetLineNumber() << "," << frame->GetColumn() << "): " << (*functionStr ? *functionStr : "") << "\n";
+	}
+
+	printf("%s\n%s\n%s\n", *messageStr, stack.str(), *errorStr);
+}
+
 namespace sampnode
 {
 	NodeImpl nodeImpl;
@@ -65,6 +86,8 @@ namespace sampnode
 			});
 
 		v8Isolate->SetCaptureStackTraceForUncaughtExceptions(true);
+
+		v8Isolate->AddMessageListener(OnMessage);
 
 		//v8::Locker locker(m_isolate);
 		v8::Isolate::Scope isolateScope(v8Isolate);
