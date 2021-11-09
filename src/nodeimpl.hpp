@@ -53,25 +53,7 @@ namespace sampnode
 			return mainConfig;
 		}
 
-		inline void Tick()
-		{
-			v8::Locker locker(v8Isolate);
-			v8Isolate->Enter();
-			v8::HandleScope hs(v8Isolate);
-
-
-			auto env = resourceNamesPool.at("");
-			auto resource = resourcesPool.at(env);
-			v8::Local<v8::Context> _context = resource->GetContext().Get(v8Isolate);
-
-
-			v8::Context::Scope contextScope(_context);
-
-
-			uv_run(nodeLoop->GetLoop(), UV_RUN_NOWAIT);
-//			v8Platform->DrainBackgroundTasks(v8Isolate);
-			v8Isolate->Exit();
-		}
+		void Tick();
 
 		inline void Stop()
 		{

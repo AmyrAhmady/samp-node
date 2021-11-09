@@ -42,6 +42,22 @@ namespace sampnode
 	NodeImpl::~NodeImpl()
 	{}
 
+	void NodeImpl::Tick()
+	{
+		v8::Locker locker(v8Isolate);
+		v8::Isolate::Scope isolateScope(v8Isolate);
+		v8::HandleScope hs(v8Isolate);
+
+		for (auto& res : resourcesPool) {
+			std::shared_ptr<Resource> resource = res.second;
+			v8::Local<v8::Context> _context = resource->GetContext().Get(v8Isolate);
+
+			v8::Context::Scope contextScope(_context);
+
+			uv_run(nodeLoop->GetLoop(), UV_RUN_NOWAIT);
+		}
+	}
+
 	void NodeImpl::Initialize(const Props_t& config)
 	{
 		mainConfig = config;
@@ -107,6 +123,7 @@ namespace sampnode
 
 	bool NodeImpl::UnloadResource(const std::string& name)
 	{
+		v8::Locker locker(v8Isolate);
 		node::Environment* nodeEnv = resourceNamesPool[name];
 		resourcesPool.erase(nodeEnv);
 		resourceNamesPool.erase(name);
