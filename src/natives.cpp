@@ -32,6 +32,7 @@ namespace sampnode
 	void native::call(const v8::FunctionCallbackInfo<v8::Value>& args)
 	{
 		v8::Isolate* isolate = args.GetIsolate();
+		v8::Locker locker(isolate);
 		v8::TryCatch eh(isolate);
 
 		v8::String::Utf8Value str(isolate, args[0]);
@@ -335,6 +336,7 @@ namespace sampnode
 	void native::call_float(const v8::FunctionCallbackInfo<v8::Value>& args)
 	{
 		v8::Isolate* isolate = args.GetIsolate();
+		v8::Locker locker(isolate);
 		v8::TryCatch eh(isolate);
 
 		v8::String::Utf8Value str(isolate, args[0]);

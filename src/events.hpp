@@ -23,6 +23,7 @@ namespace sampnode
 			)
 			{
 				isolate = _isolate;
+				v8::Locker locker(isolate);
 				context.Reset(_isolate, _context);
 				function.Reset(_isolate, _function);
 			}
@@ -34,6 +35,7 @@ namespace sampnode
 			)
 			{
 				isolate = _isolate;
+				v8::Locker locker(isolate);
 				context.Reset(_isolate, _context);
 				function.Reset(_isolate, _function);
 			}

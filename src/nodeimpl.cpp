@@ -66,7 +66,7 @@ namespace sampnode
 
 		v8Isolate->SetCaptureStackTraceForUncaughtExceptions(true);
 
-		//v8::Locker locker(m_isolate);
+		v8::Locker locker(v8Isolate);
 		v8::Isolate::Scope isolateScope(v8Isolate);
 		v8::HandleScope handle_scope(v8Isolate);
 

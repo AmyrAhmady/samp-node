@@ -25,6 +25,7 @@ namespace sampnode
 	{
 		if (info.Length() > 1)
 		{
+			v8::Locker locker(info.GetIsolate());
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString() || !info[1]->IsString())
 			{
@@ -50,6 +51,7 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
+			v8::Locker locker(info.GetIsolate());
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString())
 				return;
@@ -72,6 +74,7 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
+			v8::Locker locker(info.GetIsolate());
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString())
 				return;
@@ -95,6 +98,7 @@ namespace sampnode
 							if (element.function.Get(info.GetIsolate()) == function)
 							{
 								v8::Isolate* isolate = info.GetIsolate();
+								v8::Locker locker(isolate);
 								_event->remove(element.function.Get(info.GetIsolate()));
 								break;
 							}
@@ -106,6 +110,7 @@ namespace sampnode
 				{
 					v8::Local<v8::Function> function = v8::Local<v8::Function>::Cast(info[1]);
 					for (auto& element : _event->functionList) {
+						v8::Locker locker(info.GetIsolate());
 						if (element.function.Get(info.GetIsolate()) == function)
 						{
 							_event->remove(element.function.Get(info.GetIsolate()));
@@ -125,6 +130,7 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
+			v8::Locker locker(info.GetIsolate());
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString())
 				return;
@@ -181,6 +187,7 @@ namespace sampnode
 	void event::append(const v8::Local<v8::Function>& function)
 	{
 		v8::Isolate* isolate = function->GetIsolate();
+		v8::Locker locker(isolate);
 
 		bool result = std::any_of(functionList.cbegin(), functionList.cend(),
 			[&function, &isolate](const EventListener_t& listener)
@@ -224,7 +231,7 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			//v8::Locker v8Locker(listener.isolate);
+			v8::Locker v8Locker(listener.isolate);
 			v8::HandleScope hs(listener.isolate);
 			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
 			v8::Context::Scope cs(ctx);
@@ -250,7 +257,7 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			//v8::Locker v8Locker(listener.isolate);
+			v8::Locker v8Locker(listener.isolate);
 			v8::HandleScope hs(listener.isolate);
 			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
 			v8::Context::Scope cs(ctx);
@@ -361,7 +368,7 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			//v8::Locker v8Locker(listener.isolate);
+			v8::Locker v8Locker(listener.isolate);
 			v8::HandleScope hs(listener.isolate);
 			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
 			v8::Context::Scope cs(ctx);

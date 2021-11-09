@@ -74,6 +74,7 @@ namespace sampnode
 			L_DEBUG << "node flags: " << argvv[i];
 		}
 
+		v8::Locker locker(GetV8Isolate());
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
 		v8::HandleScope handleScope(GetV8Isolate());
 
@@ -103,6 +104,7 @@ namespace sampnode
 
 	void Resource::RunCode(const std::string& source)
 	{
+		v8::Locker locker(GetV8Isolate());
 		const v8::Local<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
 		v8::Local<v8::Script> script = v8::Script::Compile(sourceV8String);
 		script->Run();
@@ -111,7 +113,7 @@ namespace sampnode
 	v8::Local<v8::Value> Resource::AddModule(const std::string& source, const std::string& name)
 	{
 		v8::Isolate* isolate = GetV8Isolate();
-		//v8::Locker v8Locker(isolate);
+		v8::Locker v8Locker(isolate);
 		v8::Isolate::Scope isolate_scope(isolate);
 		v8::HandleScope hs(isolate);
 		v8::EscapableHandleScope handle_scope(isolate);
