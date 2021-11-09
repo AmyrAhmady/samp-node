@@ -57,5 +57,4 @@ endif()
 # Directories
 # -
 
-add_subdirectory(deps/yaml-cpp)
 add_subdirectory(src)

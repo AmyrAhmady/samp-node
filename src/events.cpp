@@ -233,22 +233,25 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			v8::Locker v8Locker(listener.isolate);
+			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
-			v8::HandleScope hs(listener.isolate);
-			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
+			v8::HandleScope hs(isolate);
+			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, listener.context);
 			v8::Context::Scope cs(ctx);
-			v8::TryCatch eh(listener.isolate);
 
-			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
-			function->Call(listener.context.Get(listener.isolate)->Global(), argCount, args);
+			isolate->CancelTerminateExecution();
+
+			v8::TryCatch eh(isolate);
+
+			v8::Local<v8::Function> function = listener.function.Get(isolate);
+			function->Call(listener.context.Get(isolate)->Global(), argCount, args);
 
 			if (argCount > 0) delete[] args;
 
 			if (eh.HasCaught())
 			{
-				v8::String::Utf8Value str(listener.isolate, eh.Exception());
-				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
+				v8::String::Utf8Value str(isolate, eh.Exception());
+				v8::String::Utf8Value stack(isolate, eh.StackTrace(listener.context.Get(isolate)).ToLocalChecked());
 
 				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 			}
@@ -260,12 +263,15 @@ namespace sampnode
 		for (auto& listener : functionList)
 		{
 			v8::Isolate* isolate = listener.isolate;
-			v8::Locker v8Locker(listener.isolate);
+			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
-			v8::HandleScope hs(listener.isolate);
-			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
+			v8::HandleScope hs(isolate);
+			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, listener.context);
 			v8::Context::Scope cs(ctx);
-			v8::TryCatch eh(listener.isolate);
+
+			isolate->CancelTerminateExecution();
+
+			v8::TryCatch eh(isolate);
 
 			v8::Local<v8::Value>* argv = NULL;
 			unsigned int argc = paramTypes.length();
@@ -351,18 +357,22 @@ namespace sampnode
 				}
 			}
 
-			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
-			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
+			v8::Local<v8::Function> function = listener.function.Get(isolate);
+			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(isolate)->Global(), argc, argv);
 
-			int cppIntReturnValue = returnValue->Int32Value();
 			if (argc > 0) delete[] argv;
-			if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
+
 			if (eh.HasCaught())
 			{
-				v8::String::Utf8Value str(listener.isolate, eh.Exception());
-				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
-
-				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
+				v8::String::Utf8Value str(isolate, eh.Exception());
+				v8::String::Utf8Value stack(isolate, eh.StackTrace(listener.context.Get(isolate)).ToLocalChecked());
+				
+				L_ERROR << "Exception thrown: " << *str << "\nstack:\n" << *stack;
+			}
+			else
+			{
+				int cppIntReturnValue = returnValue->Int32Value();
+				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}
 	}
@@ -466,15 +476,19 @@ namespace sampnode
 			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
 			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
 
-			int cppIntReturnValue = returnValue->Int32Value();
 			if (argc > 0) delete[] argv;
-			if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
+
 			if (eh.HasCaught())
 			{
 				v8::String::Utf8Value str(listener.isolate, eh.Exception());
 				v8::String::Utf8Value stack(listener.isolate, eh.StackTrace(listener.context.Get(listener.isolate)).ToLocalChecked());
 
-				L_ERROR << "Event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
+				L_ERROR << "Exception thrown: " << *str << "\nstack:\n" << *stack << "\n";
+			}
+			else
+			{
+				int cppIntReturnValue = returnValue->Int32Value();
+				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}
 	}

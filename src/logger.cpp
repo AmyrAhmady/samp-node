@@ -4,7 +4,7 @@
 #include "logger.hpp"
 #include "config.hpp"
 
-LogLevel Log::logLevel;
+LogLevel Log::logLevel = LogLevel::LOG_FULL;
 
 void Log::Init(LogLevel level)
 {

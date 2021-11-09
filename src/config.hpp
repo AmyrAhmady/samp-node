@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <yaml-cpp/yaml.h>
 #include "json.hpp"
 #include "logger.hpp"
 
@@ -25,7 +24,6 @@ namespace sampnode
 		~Config();
 
 		bool ParseFile(const std::string& path);
-		bool ParseYamlFile(const std::string& path);
 		bool ParseJsonFile(const std::string& path);
 
 		template<typename T, typename... args>
@@ -35,7 +33,5 @@ namespace sampnode
 
 	private:
 		json jsonObject;
-		YAML::Node yamlObject;
-		bool usingJson = true;
 	};
 };

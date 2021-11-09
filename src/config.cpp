@@ -1,7 +1,6 @@
 #include <string>
 #include <fstream>
 #include <vector>
-#include <yaml-cpp/yaml.h>
 #include "json.hpp"
 #include "logger.hpp"
 #include "config.hpp"
@@ -14,19 +13,10 @@ namespace sampnode
 	{
 		if (!ParseJsonFile(path))
 		{
-			if (!ParseYamlFile(path))
-			{
-				return false;
-			}
-			else
-			{
-				usingJson = false;
-				L_INFO << "plugin is using " << path << ".yml config file";
-			}
+			return false;
 		}
 		else
 		{
-			usingJson = true;
 			L_INFO << "plugin is using " << path << ".json config file";
 		}
 		return true;
@@ -38,7 +28,7 @@ namespace sampnode
 
 		if (!jsonFile.good())
 		{
-			L_INFO << "unable to locate JSON config file at " << path + ".json, trying YAML now";
+			L_INFO << "unable to locate JSON config file at " << path + ".json.";
 			return false;
 		}
 
@@ -48,32 +38,6 @@ namespace sampnode
 		if (!object.is_null())
 		{
 			jsonObject = object;
-			return true;
-		}
-		return false;
-	}
-
-	bool Config::ParseYamlFile(const std::string& path)
-	{
-		YAML::Node object;
-
-		try
-		{
-			object = YAML::LoadFile(path + ".yml");
-		}
-		catch (const YAML::ParserException& e)
-		{
-			L_ERROR << "Could not parse the config file: " << e.what();
-			return false;
-		}
-		catch (const YAML::BadFile&)
-		{
-			return false;
-		}
-
-		if (object)
-		{
-			yamlObject = object;
 			return true;
 		}
 		return false;
@@ -96,39 +60,19 @@ namespace sampnode
 	{
 		std::vector<std::string> _keys = { keys... };
 
-		if (usingJson)
+		json tempJsonObj = jsonObject;
+		for (auto& key : _keys)
 		{
-			json tempJsonObj = jsonObject;
-			for (auto& key : _keys)
+			if (!tempJsonObj[key].is_null())
 			{
-				if (!tempJsonObj[key].is_null())
-				{
-					tempJsonObj = tempJsonObj[key];
-				}
-				else
-				{
-					return T();
-				}
+				tempJsonObj = tempJsonObj[key];
 			}
-			return tempJsonObj.get<T>();
-		}
-		else
-		{
-
-			YAML::Node tempYamlObj = YAML::Clone(yamlObject);
-			for (auto& key : _keys)
+			else
 			{
-				if (!tempYamlObj[key].IsNull())
-				{
-					tempYamlObj = tempYamlObj[key];
-				}
-				else
-				{
-					return T();
-				}
+				return T();
 			}
-			return tempYamlObj.as<T>();
 		}
+		return tempJsonObj.get<T>();
 	}
 
 	Config::Config()
