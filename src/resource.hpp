@@ -7,7 +7,6 @@
 #include "env-inl.h"
 #include "v8.h"
 #include "uv.h"
-#include "node.h"
 #include "libplatform/libplatform.h"
 #include "utils.hpp"
 

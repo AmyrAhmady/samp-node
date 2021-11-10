@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <map>
 #include "amx/amx.h"
+#include "node.h"
 #include "v8.h"
 #include "uv.h"
 

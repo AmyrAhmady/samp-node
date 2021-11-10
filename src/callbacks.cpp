@@ -4,7 +4,6 @@
 #include <cstring>
 #endif
 
-#include "v8.h"
 #include "logger.hpp"
 #include "resource.hpp"
 #include "events.hpp"
@@ -103,6 +102,7 @@ namespace sampnode
 	{
 		v8::Isolate* isolate = info.GetIsolate();
 		v8::Locker locker(isolate);
+		v8::Isolate::Scope isolateScope(isolate);
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 
@@ -295,6 +295,7 @@ namespace sampnode
 	{
 		v8::Isolate* isolate = info.GetIsolate();
 		v8::Locker locker(isolate);
+		v8::Isolate::Scope isolateScope(isolate);
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 

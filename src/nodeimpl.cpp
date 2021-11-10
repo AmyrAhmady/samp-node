@@ -18,18 +18,21 @@ public:
 
 void OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error)
 {
-	v8::String::Utf8Value messageStr(sampnode::nodeImpl.GetIsolate(), message->Get());
-	v8::String::Utf8Value errorStr(sampnode::nodeImpl.GetIsolate(), error);
+	auto isolate = sampnode::nodeImpl.GetIsolate();
+	v8::Locker locker(isolate);
+	v8::Isolate::Scope isolateScope(isolate);
+	v8::String::Utf8Value messageStr(isolate, message->Get());
+	v8::String::Utf8Value errorStr(isolate, error);
 
 	std::stringstream stack;
 	auto stackTrace = message->GetStackTrace();
 
 	for (int i = 0; i < stackTrace->GetFrameCount(); i++)
 	{
-		auto frame = stackTrace->GetFrame(sampnode::nodeImpl.GetIsolate(), i);
+		auto frame = stackTrace->GetFrame(isolate, i);
 
-		v8::String::Utf8Value sourceStr(sampnode::nodeImpl.GetIsolate(), frame->GetScriptNameOrSourceURL());
-		v8::String::Utf8Value functionStr(sampnode::nodeImpl.GetIsolate(), frame->GetFunctionName());
+		v8::String::Utf8Value sourceStr(isolate, frame->GetScriptNameOrSourceURL());
+		v8::String::Utf8Value functionStr(isolate, frame->GetFunctionName());
 
 		stack << *sourceStr << "(" << frame->GetLineNumber() << "," << frame->GetColumn() << "): " << (*functionStr ? *functionStr : "") << "\n";
 	}
@@ -146,6 +149,7 @@ namespace sampnode
 	bool NodeImpl::UnloadResource(const std::string& name)
 	{
 		v8::Locker locker(v8Isolate);
+		v8::Isolate::Scope isolateScope(v8Isolate);
 		node::Environment* nodeEnv = resourceNamesPool[name];
 		resourcesPool.erase(nodeEnv);
 		resourceNamesPool.erase(name);

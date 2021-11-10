@@ -3,8 +3,6 @@
 #include "callbacks.hpp"
 #include "events.hpp"
 #include "nodeimpl.hpp"
-#include "logger.hpp"
-#include "config.hpp"
 
 v8::Isolate* GetV8Isolate()
 {
@@ -105,6 +103,7 @@ namespace sampnode
 	void Resource::RunCode(const std::string& source)
 	{
 		v8::Locker locker(GetV8Isolate());
+		v8::Isolate::Scope isolateScope(GetV8Isolate());
 		const v8::Local<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
 		v8::Local<v8::Script> script = v8::Script::Compile(sourceV8String);
 		script->Run();
