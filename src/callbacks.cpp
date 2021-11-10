@@ -4,7 +4,6 @@
 #include <cstring>
 #endif
 
-#include "v8.h"
 #include "logger.hpp"
 #include "resource.hpp"
 #include "events.hpp"
@@ -92,6 +91,7 @@ namespace sampnode
 
 	void callback::add_event_definitions(v8::Isolate* isolate, v8::Local<v8::ObjectTemplate>& global)
 	{
+		v8::Locker locker(isolate);
 		for (auto& callback : sampCallbacks)
 		{
 			sampnode::v8val::add_definition(callback.alias, callback.name, global);
@@ -101,6 +101,8 @@ namespace sampnode
 	void callback::call(const v8::FunctionCallbackInfo<v8::Value>& info)
 	{
 		v8::Isolate* isolate = info.GetIsolate();
+		v8::Locker locker(isolate);
+		v8::Isolate::Scope isolateScope(isolate);
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 
@@ -292,6 +294,8 @@ namespace sampnode
 	void callback::call_float(const v8::FunctionCallbackInfo<v8::Value>& info)
 	{
 		v8::Isolate* isolate = info.GetIsolate();
+		v8::Locker locker(isolate);
+		v8::Isolate::Scope isolateScope(isolate);
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 

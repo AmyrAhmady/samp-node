@@ -1,4 +1,5 @@
 #pragma once
+#include "node.h"
 #include "v8.h"
 #include "amx/amx.h"
 

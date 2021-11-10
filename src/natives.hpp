@@ -3,6 +3,8 @@
 #include <unordered_map>
 #include <string>
 #include "amx/amx.h"
+#include "node.h"
+#include "v8.h"
 
 namespace sampnode
 {

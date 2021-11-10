@@ -53,10 +53,7 @@ namespace sampnode
 			return mainConfig;
 		}
 
-		inline void Tick()
-		{
-			uv_run(nodeLoop->GetLoop(), UV_RUN_NOWAIT);
-		}
+		void Tick();
 
 		inline void Stop()
 		{

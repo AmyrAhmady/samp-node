@@ -1,6 +1,5 @@
 #include <utility>
 #include <string>
-#include "v8.h"
 #include "common.hpp"
 #include "functions.hpp"
 #include "events.hpp"
@@ -28,6 +27,7 @@ namespace sampnode
 {
 	void functions::init(v8::Isolate* isolate, v8::Local<v8::ObjectTemplate>& global)
 	{
+		v8::Locker locker(isolate);
 		v8::Local<v8::ObjectTemplate> sampObject = v8::ObjectTemplate::New(isolate);
 		for (auto& routine : sampnodeSpecificFunctions)
 		{
@@ -42,6 +42,7 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
+			v8::Locker locker(info.GetIsolate()); // todo: add Isolate::Scope
 			v8::HandleScope scope(info.GetIsolate());
 			if (!info[0]->IsString())
 				return;
