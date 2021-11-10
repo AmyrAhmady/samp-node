@@ -32,7 +32,7 @@
         "samp-node.dll"
       ],      
       "includes": [
-        "samp_node.inc"
+        "samp-node.inc"
       ],
       "files": {
         "node.dll": "node.dll"
