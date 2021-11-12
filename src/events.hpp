@@ -14,12 +14,18 @@ namespace sampnode
 		struct EventListener_t
 		{
 			v8::Isolate* isolate;
-			v8::UniquePersistent<v8::Context> context;
+			v8::Persistent<v8::Context, v8::CopyablePersistentTraits<v8::Context>> context;
 			v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>> function;
+
+			EventListener_t(const EventListener_t &listener) {
+				isolate = listener.isolate;
+				context = listener.context;
+				function = listener.function;
+			}
 
 			EventListener_t(
 				v8::Isolate* _isolate,
-				const v8::UniquePersistent<v8::Context>& _context,
+				const v8::Persistent<v8::Context, v8::CopyablePersistentTraits<v8::Context>>& _context,
 				const v8::Persistent<v8::Function, v8::CopyablePersistentTraits<v8::Function>>& _function
 			)
 			{
@@ -41,6 +47,11 @@ namespace sampnode
 				function.Reset(_isolate, _function);
 			}
 
+			~EventListener_t() {
+				context.Reset();
+				function.Reset();
+			}
+
 			bool operator==(const EventListener_t& a) const {
 				return (this->function == a.function && this->context == a.context);
 			}
@@ -58,8 +69,8 @@ namespace sampnode
 		event();
 		~event();
 
-		void append(const v8::Local<v8::Function>& function);
-		void remove(const v8::Local<v8::Function>& function);
+		void append(const v8::Local<v8::Context>& context, const v8::Local<v8::Function>& function);
+		void remove(const EventListener_t& eventListener);
 		void remove_all();
 		void call(AMX* amx, cell* params, cell* retval);
 		void call_from_pawn_native(AMX* amx, cell* params, cell* retval);

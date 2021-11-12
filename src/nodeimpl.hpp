@@ -40,7 +40,7 @@ namespace sampnode
 
 		inline node::IsolateData* GetNodeIsolate()
 		{
-			return nodeData;
+			return nodeData.get();
 		}
 
 		inline UvLoop* GetUVLoop()
@@ -55,19 +55,13 @@ namespace sampnode
 
 		void Tick();
 
-		inline void Stop()
-		{
-			for (auto& resource : resourceNamesPool)
-			{
-				UnloadResource(resource.first);
-			}
-		}
+		void Stop();
 
 	private:
 		v8::Isolate* v8Isolate;
-		node::IsolateData* nodeData;
-		std::unique_ptr<v8::Platform> v8Platform;
-		std::unique_ptr<v8::ArrayBuffer::Allocator> arrayBufferAllocator;
+		std::unique_ptr<node::IsolateData, decltype(&node::FreeIsolateData)> nodeData;
+		std::unique_ptr<node::MultiIsolatePlatform> v8Platform;
+		std::unique_ptr<node::ArrayBufferAllocator> arrayBufferAllocator;
 		std::unique_ptr<UvLoop> nodeLoop;
 		Props_t mainConfig;
 		std::unordered_map<std::string, node::Environment*> resourceNamesPool;

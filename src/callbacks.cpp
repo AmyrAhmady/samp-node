@@ -103,6 +103,10 @@ namespace sampnode
 		v8::Isolate* isolate = info.GetIsolate();
 		v8::Locker locker(isolate);
 		v8::Isolate::Scope isolateScope(isolate);
+
+		auto _context = isolate->GetCurrentContext();
+		v8::Context::Scope contextScope(_context);
+
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 
@@ -126,7 +130,7 @@ namespace sampnode
 				case 'i':
 				case 'd':
 				{
-					_params[i] = info[k]->Int32Value();
+					_params[i] = info[k]->Int32Value(_context).ToChecked();
 					params.push_back(static_cast<void*>(&_params[i]));
 					k++;
 				}
@@ -134,7 +138,7 @@ namespace sampnode
 				case 'f':
 				{
 					float val = 0.0;
-					if (!info[k]->IsUndefined()) val = static_cast<float>(info[k]->NumberValue());
+					if (!info[k]->IsUndefined()) val = static_cast<float>(info[k]->NumberValue(_context).ToChecked());
 					_params[i] = amx_ftoc(val);
 					params.push_back(static_cast<void*>(&_params[i]));
 					k++;
@@ -172,7 +176,7 @@ namespace sampnode
 
 					for (size_t b = 0; b < size; b++)
 					{
-						value[b] = a->Get(b)->Int32Value();
+						value[b] = a->Get(_context, b).ToLocalChecked()->Int32Value(_context).ToChecked();
 					}
 
 					params.push_back(static_cast<void*>(value));
@@ -197,7 +201,7 @@ namespace sampnode
 
 					for (size_t b = 0; b < size; b++)
 					{
-						float val = static_cast<float>(a->Get(b)->NumberValue());
+						float val = static_cast<float>(a->Get(_context, b).ToLocalChecked()->NumberValue(_context).ToChecked());
 						value[b] = amx_ftoc(val);
 					}
 
@@ -296,6 +300,10 @@ namespace sampnode
 		v8::Isolate* isolate = info.GetIsolate();
 		v8::Locker locker(isolate);
 		v8::Isolate::Scope isolateScope(isolate);
+
+		auto _context = isolate->GetCurrentContext();
+		v8::Context::Scope contextScope(_context);
+
 		v8::TryCatch eh(isolate);
 		int returnValue = 0;
 
@@ -319,7 +327,7 @@ namespace sampnode
 				case 'i':
 				case 'd':
 				{
-					_params[i] = info[k]->Int32Value();
+					_params[i] = info[k]->Int32Value(_context).ToChecked();
 					params.push_back(static_cast<void*>(&_params[i]));
 					k++;
 				}
@@ -327,7 +335,7 @@ namespace sampnode
 				case 'f':
 				{
 					float val = 0.0;
-					if (!info[k]->IsUndefined()) val = static_cast<float>(info[k]->NumberValue());
+					if (!info[k]->IsUndefined()) val = static_cast<float>(info[k]->NumberValue(_context).ToChecked());
 					_params[i] = amx_ftoc(val);
 					params.push_back(static_cast<void*>(&_params[i]));
 					k++;
@@ -365,7 +373,7 @@ namespace sampnode
 
 					for (size_t b = 0; b < size; b++)
 					{
-						value[b] = a->Get(b)->Int32Value();
+						value[b] = a->Get(_context, b).ToLocalChecked()->Int32Value(_context).ToChecked();
 					}
 
 					params.push_back(static_cast<void*>(value));
@@ -390,7 +398,7 @@ namespace sampnode
 
 					for (size_t b = 0; b < size; b++)
 					{
-						float val = static_cast<float>(a->Get(b)->NumberValue());
+						float val = static_cast<float>(a->Get(_context, b).ToLocalChecked()->NumberValue(_context).ToChecked());
 						value[b] = amx_ftoc(val);
 					}
 

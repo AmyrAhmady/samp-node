@@ -23,7 +23,7 @@
 #define SRC_NODE_OBJECT_WRAP_H_
 
 #include "v8.h"
-#include <assert.h>
+#include <cassert>
 
 
 namespace node {
@@ -65,6 +65,7 @@ class ObjectWrap {
   }
 
 
+  // NOLINTNEXTLINE(runtime/v8_persistent)
   inline v8::Persistent<v8::Object>& persistent() {
     return handle_;
   }
@@ -80,7 +81,7 @@ class ObjectWrap {
   }
 
 
-  inline void MakeWeak(void) {
+  inline void MakeWeak() {
     persistent().SetWeak(this, WeakCallback, v8::WeakCallbackType::kParameter);
   }
 
@@ -122,6 +123,7 @@ class ObjectWrap {
     delete wrap;
   }
 
+  // NOLINTNEXTLINE(runtime/v8_persistent)
   v8::Persistent<v8::Object> handle_;
 };
 

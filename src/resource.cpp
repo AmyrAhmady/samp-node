@@ -22,10 +22,10 @@ static node::IsolateData* GetNodeIsolate()
 namespace sampnode
 {
 
-	Resource::Resource(const std::string& name, const std::string& path) : name(name), path(path)
+	Resource::Resource(const std::string& name, const std::string& path) : name(name), path(path), nodeEnvironment(nullptr, node::FreeEnvironment)
 	{}
 
-	Resource::Resource()
+	Resource::Resource() : nodeEnvironment(nullptr, node::FreeEnvironment)
 	{}
 
 	Resource::~Resource()
@@ -38,6 +38,9 @@ namespace sampnode
 		std::string entryFile;
 		std::vector<std::string> node_flags;
 		Props_t& mainConfig = nodeImpl.GetMainConfig();
+
+		bool useInspector;
+
 		if (mainConfig.enable_resources && path != "no_resource")
 		{
 			Config configFile;
@@ -49,28 +52,31 @@ namespace sampnode
 
 			entryFile = path + "/" + configFile.get_as<std::string>("entry_file");
 			node_flags = configFile.get_as<std::vector<std::string>>("node_flags");
+			useInspector = mainConfig.resources.size() == 1;
 		}
 		else
 		{
 			entryFile = mainConfig.entry_file;
 			node_flags = mainConfig.node_flags;
+			useInspector = true;
 		}
 
-		std::vector<const char*> argvv;
-		argvv.push_back("node");
+		std::vector<std::string> args;
+		args.emplace_back("node");
 
 		for (auto& flag : node_flags)
 		{
-			argvv.push_back(flag.c_str());
+			args.emplace_back(flag.c_str());
 		}
 
-		argvv.push_back(entryFile.c_str());
-		int argc = argvv.size();
+		args.emplace_back(entryFile.c_str());
 
-		for (int i = 0; i < argc; i++)
+		for (auto& flag : args)
 		{
-			L_DEBUG << "node flags: " << argvv[i];
+			L_DEBUG << "node flags: " << flag;
 		}
+
+		std::vector<std::string> exec_args;
 
 		v8::Locker locker(GetV8Isolate());
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
@@ -83,20 +89,29 @@ namespace sampnode
 		// create a global variable for resource
 		v8val::add_definition("__resname", name, global);
 
-		v8::Local<v8::Context> _context = v8::Context::New(GetV8Isolate(), nullptr, global);
+		v8::Local<v8::Context> _context = node::NewContext(GetV8Isolate(), global);
 		context.Reset(GetV8Isolate(), _context);
 		v8::Context::Scope scope(_context);
 
-		auto env = node::CreateEnvironment(GetNodeIsolate(), _context, argc, (char**)argvv.data(), 0, nullptr);
-		node::LoadEnvironment(env);
-		nodeEnvironment = env;
+		node::EnvironmentFlags::Flags flags = node::EnvironmentFlags::kOwnsProcessState;
+
+		if (useInspector) {
+			flags = static_cast<node::EnvironmentFlags::Flags>(flags | node::EnvironmentFlags::kOwnsInspector);
+		}
+
+		auto env = node::CreateEnvironment(GetNodeIsolate(), _context, args, exec_args, flags);
+
+		node::LoadEnvironment(env, node::StartExecutionCallback{});
+
+		nodeEnvironment.reset(env);
 
 		return;
 	}
 
 	void Resource::Stop()
 	{
-		node::FreeEnvironment(nodeEnvironment);
+		node::Stop(nodeEnvironment.get());
+		node::FreeEnvironment(nodeEnvironment.get());
 		context.Reset();
 	}
 
@@ -104,9 +119,14 @@ namespace sampnode
 	{
 		v8::Locker locker(GetV8Isolate());
 		v8::Isolate::Scope isolateScope(GetV8Isolate());
+
+		auto _context = context.Get(GetV8Isolate());
+
+		v8::Context::Scope contextScope(_context);
+
 		const v8::Local<v8::String>& sourceV8String = v8::String::NewFromUtf8(GetV8Isolate(), source.c_str(), v8::NewStringType::kNormal).ToLocalChecked();
-		v8::Local<v8::Script> script = v8::Script::Compile(sourceV8String);
-		script->Run();
+		v8::Local<v8::Script> script = v8::Script::Compile(_context, sourceV8String).ToLocalChecked();
+		script->Run(_context);
 	}
 
 	v8::Local<v8::Value> Resource::AddModule(const std::string& source, const std::string& name)
@@ -119,18 +139,18 @@ namespace sampnode
 		v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, context);
 		v8::Context::Scope context_scope(ctx);
 
-		auto scriptname = v8::String::NewFromUtf8(isolate, name.c_str());
-		v8::ScriptOrigin origin(scriptname, v8::Integer::New(isolate, -1));
+		auto scriptname = v8::String::NewFromUtf8(isolate, name.c_str()).ToLocalChecked();
+		v8::ScriptOrigin origin(scriptname, v8::Integer::New(isolate, -1), v8::Integer::New(isolate, 0));
 		auto sourceCode = v8::String::NewFromUtf8(isolate, source.c_str());
 
 		v8::TryCatch try_catch(isolate);
 
-		auto script = v8::Script::Compile(sourceCode, &origin);
+		auto script = v8::Script::Compile(ctx, sourceCode.ToLocalChecked(), &origin);
 
 		if (script.IsEmpty())
 		{
 			isolate->CancelTerminateExecution();
-			v8::String::Utf8Value exception(try_catch.Exception());
+			v8::String::Utf8Value exception(isolate, try_catch.Exception());
 			const char* exception_string = *exception;
 			v8::Local<v8::Message> message = try_catch.Message();
 
@@ -140,12 +160,12 @@ namespace sampnode
 			}
 			else
 			{
-				v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
+				v8::String::Utf8Value filename(isolate, message->GetScriptOrigin().ResourceName());
 				const char* filename_string = *filename;
-				int linenum = message->GetLineNumber();
+				int linenum = message->GetLineNumber(ctx).ToChecked();
 
 				L_ERROR << filename_string << ":" << linenum << ": " << exception_string;
-				v8::String::Utf8Value sourceline(message->GetSourceLine());
+				v8::String::Utf8Value sourceline(isolate, message->GetSourceLine(ctx).ToLocalChecked());
 				const char* sourceline_string = *sourceline;
 				L_INFO << sourceline_string;
 			}
@@ -153,11 +173,11 @@ namespace sampnode
 		else
 		{
 			try_catch.Reset();
-			v8::Local<v8::Value> result = script->Run();
+			v8::Local<v8::Value> result = script.ToLocalChecked()->Run(ctx).ToLocalChecked();
 			if (try_catch.HasCaught())
 			{
 				isolate->CancelTerminateExecution();
-				v8::String::Utf8Value exception(try_catch.Exception());
+				v8::String::Utf8Value exception(isolate, try_catch.Exception());
 				const char* exception_string = *exception;
 				v8::Local<v8::Message> message = try_catch.Message();
 
@@ -167,12 +187,12 @@ namespace sampnode
 				}
 				else
 				{
-					v8::String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
+					v8::String::Utf8Value filename(isolate, message->GetScriptOrigin().ResourceName());
 					const char* filename_string = *filename;
-					int linenum = message->GetLineNumber();
+					int linenum = message->GetLineNumber(ctx).ToChecked();
 
 					L_ERROR << filename_string << ":" << linenum << ": " << exception_string;
-					v8::String::Utf8Value sourceline(message->GetSourceLine());
+					v8::String::Utf8Value sourceline(isolate, message->GetSourceLine(ctx).ToLocalChecked());
 					const char* sourceline_string = *sourceline;
 					L_INFO << sourceline_string;
 				}

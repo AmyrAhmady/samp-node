@@ -5,10 +5,12 @@
 #ifndef V8_LIBPLATFORM_LIBPLATFORM_H_
 #define V8_LIBPLATFORM_LIBPLATFORM_H_
 
+#include <memory>
+
 #include "libplatform/libplatform-export.h"
 #include "libplatform/v8-tracing.h"
-#include "v8-platform.h"  // NOLINT(build/include)
-#include "v8config.h"     // NOLINT(build/include)
+#include "v8-platform.h"  // NOLINT(build/include_directory)
+#include "v8config.h"     // NOLINT(build/include_directory)
 
 namespace v8 {
 namespace platform {
@@ -41,31 +43,40 @@ V8_PLATFORM_EXPORT std::unique_ptr<v8::Platform> NewDefaultPlatform(
         InProcessStackDumping::kDisabled,
     std::unique_ptr<v8::TracingController> tracing_controller = {});
 
-V8_PLATFORM_EXPORT V8_DEPRECATED(
-    "Use NewDefaultPlatform instead",
-    v8::Platform* CreateDefaultPlatform(
-        int thread_pool_size = 0,
-        IdleTaskSupport idle_task_support = IdleTaskSupport::kDisabled,
-        InProcessStackDumping in_process_stack_dumping =
-            InProcessStackDumping::kDisabled,
-        v8::TracingController* tracing_controller = nullptr));
+/**
+ * The same as NewDefaultPlatform but disables the worker thread pool.
+ * It must be used with the --single-threaded V8 flag.
+ */
+V8_PLATFORM_EXPORT std::unique_ptr<v8::Platform>
+NewSingleThreadedDefaultPlatform(
+    IdleTaskSupport idle_task_support = IdleTaskSupport::kDisabled,
+    InProcessStackDumping in_process_stack_dumping =
+        InProcessStackDumping::kDisabled,
+    std::unique_ptr<v8::TracingController> tracing_controller = {});
+
+/**
+ * Returns a new instance of the default v8::JobHandle implementation.
+ *
+ * The job will be executed by spawning up to |num_worker_threads| many worker
+ * threads on the provided |platform| with the given |priority|.
+ */
+V8_PLATFORM_EXPORT std::unique_ptr<v8::JobHandle> NewDefaultJobHandle(
+    v8::Platform* platform, v8::TaskPriority priority,
+    std::unique_ptr<v8::JobTask> job_task, size_t num_worker_threads);
 
 /**
  * Pumps the message loop for the given isolate.
  *
  * The caller has to make sure that this is called from the right thread.
- * Returns true if a task was executed, and false otherwise. Unless requested
- * through the |behavior| parameter, this call does not block if no task is
- * pending. The |platform| has to be created using |NewDefaultPlatform|.
+ * Returns true if a task was executed, and false otherwise. If the call to
+ * PumpMessageLoop is nested within another call to PumpMessageLoop, only
+ * nestable tasks may run. Otherwise, any task may run. Unless requested through
+ * the |behavior| parameter, this call does not block if no task is pending. The
+ * |platform| has to be created using |NewDefaultPlatform|.
  */
 V8_PLATFORM_EXPORT bool PumpMessageLoop(
     v8::Platform* platform, v8::Isolate* isolate,
     MessageLoopBehavior behavior = MessageLoopBehavior::kDoNotWait);
-
-V8_PLATFORM_EXPORT V8_DEPRECATE_SOON(
-    "This function has become obsolete and is essentially a nop",
-    void EnsureEventLoopInitialized(v8::Platform* platform,
-                                    v8::Isolate* isolate));
 
 /**
  * Runs pending idle tasks for at most |idle_time_in_seconds| seconds.
@@ -84,11 +95,21 @@ V8_PLATFORM_EXPORT void RunIdleTasks(v8::Platform* platform,
  * The |platform| has to be created using |NewDefaultPlatform|.
  *
  */
-V8_PLATFORM_EXPORT V8_DEPRECATE_SOON(
-    "Access the DefaultPlatform directly",
-    void SetTracingController(
-        v8::Platform* platform,
-        v8::platform::tracing::TracingController* tracing_controller));
+V8_DEPRECATE_SOON("Access the DefaultPlatform directly")
+V8_PLATFORM_EXPORT void SetTracingController(
+    v8::Platform* platform,
+    v8::platform::tracing::TracingController* tracing_controller);
+
+/**
+ * Notifies the given platform about the Isolate getting deleted soon. Has to be
+ * called for all Isolates which are deleted - unless we're shutting down the
+ * platform.
+ *
+ * The |platform| has to be created using |NewDefaultPlatform|.
+ *
+ */
+V8_PLATFORM_EXPORT void NotifyIsolateShutdown(v8::Platform* platform,
+                                              Isolate* isolate);
 
 }  // namespace platform
 }  // namespace v8

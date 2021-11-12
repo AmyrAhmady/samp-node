@@ -26,9 +26,11 @@
 
 #include "async_wrap.h"
 #include "connection_wrap.h"
-#include "env.h"
 
 namespace node {
+
+class ExternalReferenceRegistry;
+class Environment;
 
 class PipeWrap : public ConnectionWrap<PipeWrap, uv_pipe_t> {
  public:
@@ -38,13 +40,15 @@ class PipeWrap : public ConnectionWrap<PipeWrap, uv_pipe_t> {
     IPC
   };
 
-  static v8::Local<v8::Object> Instantiate(Environment* env,
-                                           AsyncWrap* parent,
-                                           SocketType type);
+  static v8::MaybeLocal<v8::Object> Instantiate(Environment* env,
+                                                AsyncWrap* parent,
+                                                SocketType type);
   static void Initialize(v8::Local<v8::Object> target,
                          v8::Local<v8::Value> unused,
-                         v8::Local<v8::Context> context);
+                         v8::Local<v8::Context> context,
+                         void* priv);
 
+  static void RegisterExternalReferences(ExternalReferenceRegistry* registry);
   SET_NO_MEMORY_INFO()
   SET_MEMORY_INFO_NAME(PipeWrap)
   SET_SELF_SIZE(PipeWrap)

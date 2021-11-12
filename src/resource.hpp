@@ -32,20 +32,20 @@ namespace sampnode
 
 		node::Environment* GetEnv()
 		{
-			return nodeEnvironment;
+			return nodeEnvironment.get();
 		}
 
 	private:
 		v8::UniquePersistent<v8::Context> context;
-		node::Environment* nodeEnvironment;
+		std::unique_ptr<node::Environment, decltype(&node::FreeEnvironment)> nodeEnvironment;
 		std::string path;
 		std::string name;
 	};
 
 	namespace v8val
 	{
-		inline std::string to_string(const v8::Local<v8::Value>& val) { return utils::js_to_string(val); }
-		inline const char* to_cstring(const v8::Local<v8::Value>& val) { return utils::js_to_cstr(val); }
+		inline std::string to_string(v8::Isolate *isolate, const v8::Local<v8::Value>& val) { return utils::js_to_string(isolate, val); }
+		inline const char* to_cstring(v8::Isolate *isolate, const v8::Local<v8::Value>& val) { return utils::js_to_cstr(isolate, val); }
 		void add_definition(const std::string& name, const std::string& value, v8::Local<v8::ObjectTemplate>& global);
 	}
 }
