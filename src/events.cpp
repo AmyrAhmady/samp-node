@@ -248,6 +248,10 @@ namespace sampnode
 
 		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
@@ -280,6 +284,10 @@ namespace sampnode
 
 		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
@@ -402,6 +410,10 @@ namespace sampnode
 
 		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(listener.isolate);
 			v8::Isolate::Scope isolateScope(isolate);
