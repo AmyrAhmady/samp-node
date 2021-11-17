@@ -15,7 +15,7 @@
       "archive": true,
       "platform": "linux",
       "files": {
-        "libnode.so.64": "libnode.so.64"
+        "libnode.so.93": "libnode.so.93"
       },
       "plugins": [
         "samp-node.so"

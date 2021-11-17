@@ -22,7 +22,7 @@ inline const char* GetNodeName(const char* node_name, const char* edge_name) {
 class MemoryRetainerNode : public v8::EmbedderGraph::Node {
  public:
   inline MemoryRetainerNode(MemoryTracker* tracker,
-                                     const MemoryRetainer* retainer)
+                            const MemoryRetainer* retainer)
       : retainer_(retainer) {
     CHECK_NOT_NULL(retainer_);
     v8::HandleScope handle_scope(tracker->isolate());
@@ -34,9 +34,9 @@ class MemoryRetainerNode : public v8::EmbedderGraph::Node {
   }
 
   inline MemoryRetainerNode(MemoryTracker* tracker,
-                                     const char* name,
-                                     size_t size,
-                                     bool is_root_node = false)
+                            const char* name,
+                            size_t size,
+                            bool is_root_node = false)
       : retainer_(nullptr) {
     name_ = name;
     size_ = size;
@@ -81,6 +81,14 @@ void MemoryTracker::TrackFieldWithSize(const char* edge_name,
   if (size > 0) AddNode(GetNodeName(node_name, edge_name), size, edge_name);
 }
 
+void MemoryTracker::TrackInlineFieldWithSize(const char* edge_name,
+                                             size_t size,
+                                             const char* node_name) {
+  if (size > 0) AddNode(GetNodeName(node_name, edge_name), size, edge_name);
+  CHECK(CurrentNode());
+  CurrentNode()->size_ -= size;
+}
+
 void MemoryTracker::TrackField(const char* edge_name,
                                const MemoryRetainer& value,
                                const char* node_name) {
@@ -93,21 +101,37 @@ void MemoryTracker::TrackField(const char* edge_name,
   if (value == nullptr) return;
   auto it = seen_.find(value);
   if (it != seen_.end()) {
-    // For ABI compatibility, we did not backport the virtual function
-    // AddEdge() with a name as last argument back to v10.x.
-    graph_->AddEdge(CurrentNode(), it->second/*, edge_name */);
+    graph_->AddEdge(CurrentNode(), it->second, edge_name);
   } else {
     Track(value, edge_name);
   }
 }
 
-template <typename T>
+template <typename T, typename D>
 void MemoryTracker::TrackField(const char* edge_name,
-                               const std::unique_ptr<T>& value,
+                               const std::unique_ptr<T, D>& value,
                                const char* node_name) {
   if (value.get() == nullptr) {
     return;
   }
+  TrackField(edge_name, value.get(), node_name);
+}
+
+template <typename T>
+void MemoryTracker::TrackField(const char* edge_name,
+                               const std::shared_ptr<T>& value,
+                               const char* node_name) {
+  if (value.get() == nullptr) {
+    return;
+  }
+  TrackField(edge_name, value.get(), node_name);
+}
+
+template <typename T, bool kIsWeak>
+void MemoryTracker::TrackField(const char* edge_name,
+                               const BaseObjectPtrImpl<T, kIsWeak>& value,
+                               const char* node_name) {
+  if (value.get() == nullptr || kIsWeak) return;
   TrackField(edge_name, value.get(), node_name);
 }
 
@@ -179,10 +203,18 @@ void MemoryTracker::TrackField(const char* edge_name,
   TrackFieldWithSize(edge_name, value.size() * sizeof(T), "std::basic_string");
 }
 
-template <typename T, typename Traits>
+template <typename T>
 void MemoryTracker::TrackField(const char* edge_name,
-                               const v8::Persistent<T, Traits>& value,
+                               const v8::Eternal<T>& value,
                                const char* node_name) {
+  TrackField(edge_name, value.Get(isolate_));
+}
+
+template <typename T>
+void MemoryTracker::TrackField(const char* edge_name,
+                               const v8::PersistentBase<T>& value,
+                               const char* node_name) {
+  if (value.IsWeak()) return;
   TrackField(edge_name, value.Get(isolate_));
 }
 
@@ -190,11 +222,8 @@ template <typename T>
 void MemoryTracker::TrackField(const char* edge_name,
                                const v8::Local<T>& value,
                                const char* node_name) {
-  if (!value.IsEmpty()) {
-    // For ABI compatibility, we did not backport the virtual function
-    // AddEdge() with a name as last argument back to v10.x.
-    graph_->AddEdge(CurrentNode(), graph_->V8Node(value)/*, edge_name */);
-  }
+  if (!value.IsEmpty())
+    graph_->AddEdge(CurrentNode(), graph_->V8Node(value), edge_name);
 }
 
 template <typename T>
@@ -202,6 +231,12 @@ void MemoryTracker::TrackField(const char* edge_name,
                                const MallocedBuffer<T>& value,
                                const char* node_name) {
   TrackFieldWithSize(edge_name, value.size, "MallocedBuffer");
+}
+
+void MemoryTracker::TrackField(const char* edge_name,
+                               const v8::BackingStore* value,
+                               const char* node_name) {
+  TrackFieldWithSize(edge_name, value->ByteLength(), "BackingStore");
 }
 
 void MemoryTracker::TrackField(const char* name,
@@ -222,9 +257,15 @@ void MemoryTracker::TrackField(const char* name,
   TrackFieldWithSize(name, sizeof(value), "uv_async_t");
 }
 
+void MemoryTracker::TrackInlineField(const char* name,
+                                     const uv_async_t& value,
+                                     const char* node_name) {
+  TrackInlineFieldWithSize(name, sizeof(value), "uv_async_t");
+}
+
 template <class NativeT, class V8T>
 void MemoryTracker::TrackField(const char* name,
-                               const AliasedBuffer<NativeT, V8T>& value,
+                               const AliasedBufferBase<NativeT, V8T>& value,
                                const char* node_name) {
   TrackField(name, value.GetJSArray(), "AliasedBuffer");
 }
@@ -235,9 +276,7 @@ void MemoryTracker::Track(const MemoryRetainer* retainer,
   auto it = seen_.find(retainer);
   if (it != seen_.end()) {
     if (CurrentNode() != nullptr) {
-      // For ABI compatibility, we did not backport the virtual function
-      // AddEdge() with a name as last argument back to v10.x.
-      graph_->AddEdge(CurrentNode(), it->second/*, edge_name */);
+      graph_->AddEdge(CurrentNode(), it->second, edge_name);
     }
     return;  // It has already been tracked, no need to call MemoryInfo again
   }
@@ -246,6 +285,13 @@ void MemoryTracker::Track(const MemoryRetainer* retainer,
   CHECK_EQ(CurrentNode(), n);
   CHECK_NE(n->size_, 0);
   PopNode();
+}
+
+void MemoryTracker::TrackInlineField(const MemoryRetainer* retainer,
+                                     const char* edge_name) {
+  Track(retainer, edge_name);
+  CHECK(CurrentNode());
+  CurrentNode()->size_ -= retainer->SelfSize();
 }
 
 MemoryRetainerNode* MemoryTracker::CurrentNode() const {
@@ -263,15 +309,11 @@ MemoryRetainerNode* MemoryTracker::AddNode(const MemoryRetainer* retainer,
   MemoryRetainerNode* n = new MemoryRetainerNode(this, retainer);
   graph_->AddNode(std::unique_ptr<v8::EmbedderGraph::Node>(n));
   seen_[retainer] = n;
-  if (CurrentNode() != nullptr) {
-    // For ABI compatibility, we did not backport the virtual function
-    // AddEdge() with a name as last argument back to v10.x.
-    graph_->AddEdge(CurrentNode(), n/*, edge_name */);
-  }
+  if (CurrentNode() != nullptr) graph_->AddEdge(CurrentNode(), n, edge_name);
 
   if (n->JSWrapperNode() != nullptr) {
-    graph_->AddEdge(n, n->JSWrapperNode()/*, "wrapped" */);
-    graph_->AddEdge(n->JSWrapperNode(), n/*, "wrapper" */);
+    graph_->AddEdge(n, n->JSWrapperNode(), "wrapped");
+    graph_->AddEdge(n->JSWrapperNode(), n, "wrapper");
   }
 
   return n;
@@ -283,11 +325,7 @@ MemoryRetainerNode* MemoryTracker::AddNode(const char* node_name,
   MemoryRetainerNode* n = new MemoryRetainerNode(this, node_name, size);
   graph_->AddNode(std::unique_ptr<v8::EmbedderGraph::Node>(n));
 
-  if (CurrentNode() != nullptr) {
-    // For ABI compatibility, we did not backport the virtual function
-    // AddEdge() with a name as last argument back to v10.x.
-    graph_->AddEdge(CurrentNode(), n/*, edge_name*/);
-  }
+  if (CurrentNode() != nullptr) graph_->AddEdge(CurrentNode(), n, edge_name);
 
   return n;
 }

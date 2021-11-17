@@ -14,17 +14,17 @@ namespace utils {
 		return *value ? *value : "<string conversion failed>";
 	}
 
-	inline const char* js_to_cstr(const v8::Local<v8::Value>& val)
+	inline const char* js_to_cstr(v8::Isolate *isolate, const v8::Local<v8::Value>& val)
 	{
-		const v8::String::Utf8Value jsString(val);
+		const v8::String::Utf8Value jsString(isolate, val);
 		const char* str = check_string_conversion(jsString);
 		return str;
 	}
 
-	inline std::string js_to_string(const v8::Local<v8::Value>& val)
+	inline std::string js_to_string(v8::Isolate *isolate, const v8::Local<v8::Value>& val)
 	{
 		const char* str;
-		const v8::String::Utf8Value jsString(val);
+		const v8::String::Utf8Value jsString(isolate, val);
 		str = check_string_conversion(jsString);
 		return std::string(str);
 	}

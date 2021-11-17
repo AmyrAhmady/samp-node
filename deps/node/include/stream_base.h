@@ -4,7 +4,7 @@
 #if defined(NODE_WANT_INTERNALS) && NODE_WANT_INTERNALS
 
 #include "env.h"
-#include "async_wrap-inl.h"
+#include "async_wrap.h"
 #include "node.h"
 #include "util.h"
 
@@ -13,38 +13,48 @@
 namespace node {
 
 // Forward declarations
+class Environment;
 class ShutdownWrap;
 class WriteWrap;
 class StreamBase;
 class StreamResource;
+class ExternalReferenceRegistry;
 
 struct StreamWriteResult {
   bool async;
   int err;
   WriteWrap* wrap;
   size_t bytes;
+  BaseObjectPtr<AsyncWrap> wrap_obj;
 };
 
+using JSMethodFunction = void(const v8::FunctionCallbackInfo<v8::Value>& args);
 
 class StreamReq {
  public:
-  static constexpr int kStreamReqField = 1;
+  // The kSlot internal field here mirrors BaseObject::InternalFields::kSlot
+  // here because instances derived from StreamReq will also derive from
+  // BaseObject, and the slots are used for the identical purpose.
+  enum InternalFields {
+    kSlot = BaseObject::kSlot,
+    kStreamReqField = BaseObject::kInternalFieldCount,
+    kInternalFieldCount
+  };
 
-  explicit StreamReq(StreamBase* stream,
-                     v8::Local<v8::Object> req_wrap_obj) : stream_(stream) {
-    AttachToObject(req_wrap_obj);
-  }
+  inline explicit StreamReq(
+      StreamBase* stream,
+      v8::Local<v8::Object> req_wrap_obj);
 
-  virtual ~StreamReq() {}
+  virtual ~StreamReq() = default;
   virtual AsyncWrap* GetAsyncWrap() = 0;
-  v8::Local<v8::Object> object();
+  inline v8::Local<v8::Object> object();
 
-  void Done(int status, const char* error_str = nullptr);
-  void Dispose();
+  inline void Done(int status, const char* error_str = nullptr);
+  inline void Dispose();
 
-  inline StreamBase* stream() const { return stream_; }
+  StreamBase* stream() const { return stream_; }
 
-  static StreamReq* FromObject(v8::Local<v8::Object> req_wrap_obj);
+  static inline StreamReq* FromObject(v8::Local<v8::Object> req_wrap_obj);
 
   // Sets all internal fields of `req_wrap_obj` to `nullptr`.
   // This is what the `WriteWrap` and `ShutdownWrap` JS constructors do,
@@ -56,7 +66,7 @@ class StreamReq {
  protected:
   virtual void OnDone(int status) = 0;
 
-  void AttachToObject(v8::Local<v8::Object> req_wrap_obj);
+  inline void AttachToObject(v8::Local<v8::Object> req_wrap_obj);
 
  private:
   StreamBase* const stream_;
@@ -64,9 +74,14 @@ class StreamReq {
 
 class ShutdownWrap : public StreamReq {
  public:
-  ShutdownWrap(StreamBase* stream,
-               v8::Local<v8::Object> req_wrap_obj)
-    : StreamReq(stream, req_wrap_obj) { }
+  inline ShutdownWrap(
+      StreamBase* stream,
+      v8::Local<v8::Object> req_wrap_obj);
+
+  static inline ShutdownWrap* FromObject(v8::Local<v8::Object> req_wrap_obj);
+  template <typename T, bool kIsWeak>
+  static inline ShutdownWrap* FromObject(
+      const BaseObjectPtrImpl<T, kIsWeak>& base_obj);
 
   // Call stream()->EmitAfterShutdown() and dispose of this request wrap.
   void OnDone(int status) override;
@@ -74,24 +89,22 @@ class ShutdownWrap : public StreamReq {
 
 class WriteWrap : public StreamReq {
  public:
-  char* Storage();
-  size_t StorageSize() const;
-  void SetAllocatedStorage(char* data, size_t size);
+  inline void SetBackingStore(std::unique_ptr<v8::BackingStore> bs);
 
-  WriteWrap(StreamBase* stream,
-            v8::Local<v8::Object> req_wrap_obj)
-    : StreamReq(stream, req_wrap_obj) { }
+  inline WriteWrap(
+      StreamBase* stream,
+      v8::Local<v8::Object> req_wrap_obj);
 
-  ~WriteWrap() {
-    free(storage_);
-  }
+  static inline WriteWrap* FromObject(v8::Local<v8::Object> req_wrap_obj);
+  template <typename T, bool kIsWeak>
+  static inline WriteWrap* FromObject(
+      const BaseObjectPtrImpl<T, kIsWeak>& base_obj);
 
   // Call stream()->EmitAfterWrite() and dispose of this request wrap.
   void OnDone(int status) override;
 
  private:
-  char* storage_ = nullptr;
-  size_t storage_size_ = 0;
+  std::unique_ptr<v8::BackingStore> backing_store_;
 };
 
 
@@ -115,7 +128,7 @@ class StreamListener {
   // It is not valid to return a zero-length buffer from this method.
   // It is not guaranteed that the corresponding `OnStreamRead()` call
   // happens in the same event loop turn as this call.
-  virtual uv_buf_t OnStreamAlloc(size_t suggested_size);
+  virtual uv_buf_t OnStreamAlloc(size_t suggested_size) = 0;
 
   // `OnStreamRead()` is called when data is available on the socket and has
   // been read into the buffer provided by `OnStreamAlloc()`.
@@ -149,14 +162,14 @@ class StreamListener {
   virtual void OnStreamDestroy() {}
 
   // The stream this is currently associated with, or nullptr if there is none.
-  inline StreamResource* stream() { return stream_; }
+  StreamResource* stream() const { return stream_; }
 
  protected:
   // Pass along a read error to the `StreamListener` instance that was active
   // before this one. For example, a protocol parser does not care about read
   // errors and may instead want to let the original handler
   // (e.g. the JS handler) take care of the situation.
-  void PassReadErrorToPreviousListener(ssize_t nread);
+  inline void PassReadErrorToPreviousListener(ssize_t nread);
 
   StreamResource* stream_ = nullptr;
   StreamListener* previous_listener_ = nullptr;
@@ -181,7 +194,23 @@ class ReportWritesToJSStreamListener : public StreamListener {
 // JS land via the handle’s .ondata method.
 class EmitToJSStreamListener : public ReportWritesToJSStreamListener {
  public:
+  uv_buf_t OnStreamAlloc(size_t suggested_size) override;
   void OnStreamRead(ssize_t nread, const uv_buf_t& buf) override;
+};
+
+
+// An alternative listener that uses a custom, user-provided buffer
+// for reading data.
+class CustomBufferJSListener : public ReportWritesToJSStreamListener {
+ public:
+  uv_buf_t OnStreamAlloc(size_t suggested_size) override;
+  void OnStreamRead(ssize_t nread, const uv_buf_t& buf) override;
+  void OnStreamDestroy() override { delete this; }
+
+  explicit CustomBufferJSListener(uv_buf_t buffer) : buffer_(buffer) {}
+
+ private:
+  uv_buf_t buffer_;
 };
 
 
@@ -213,8 +242,14 @@ class StreamResource {
   // `*bufs` and `*count` accordingly. This is a no-op by default.
   // Return 0 for success and a libuv error code for failures.
   virtual int DoTryWrite(uv_buf_t** bufs, size_t* count);
-  // Perform a write of data, and either call req_wrap->Done() when finished
-  // and return 0, or return a libuv error code for synchronous failures.
+  // Initiate a write of data. If the write completes synchronously, return 0 on
+  // success (with bufs modified to indicate how much data was consumed) or a
+  // libuv error code on failure. If the write will complete asynchronously,
+  // return 0. When the write completes asynchronously, call req_wrap->Done()
+  // with 0 on success (with bufs modified to indicate how much data was
+  // consumed) or a libuv error code on failure. Do not call req_wrap->Done() if
+  // the write completes synchronously, that is, it should never be called
+  // before DoWrite() has returned.
   virtual int DoWrite(WriteWrap* w,
                       uv_buf_t* bufs,
                       size_t count,
@@ -231,23 +266,25 @@ class StreamResource {
 
   // Transfer ownership of this stream to `listener`. The previous listener
   // will not receive any more callbacks while the new listener was active.
-  void PushStreamListener(StreamListener* listener);
+  inline void PushStreamListener(StreamListener* listener);
   // Remove a listener, and, if this was the currently active one,
   // transfer ownership back to the previous listener.
-  void RemoveStreamListener(StreamListener* listener);
+  inline void RemoveStreamListener(StreamListener* listener);
 
  protected:
   // Call the current listener's OnStreamAlloc() method.
-  uv_buf_t EmitAlloc(size_t suggested_size);
+  inline uv_buf_t EmitAlloc(size_t suggested_size);
   // Call the current listener's OnStreamRead() method and update the
   // stream's read byte counter.
-  void EmitRead(ssize_t nread, const uv_buf_t& buf = uv_buf_init(nullptr, 0));
+  inline void EmitRead(
+      ssize_t nread,
+      const uv_buf_t& buf = uv_buf_init(nullptr, 0));
   // Call the current listener's OnStreamAfterWrite() method.
-  void EmitAfterWrite(WriteWrap* w, int status);
+  inline void EmitAfterWrite(WriteWrap* w, int status);
   // Call the current listener's OnStreamAfterShutdown() method.
-  void EmitAfterShutdown(ShutdownWrap* w, int status);
+  inline void EmitAfterShutdown(ShutdownWrap* w, int status);
   // Call the current listener's OnStreamWantsWrite() method.
-  void EmitWantsWrite(size_t suggested_size);
+  inline void EmitWantsWrite(size_t suggested_size);
 
   StreamListener* listener_ = nullptr;
   uint64_t bytes_read_ = 0;
@@ -259,26 +296,42 @@ class StreamResource {
 
 class StreamBase : public StreamResource {
  public:
-  template <class Base>
-  static inline void AddMethods(Environment* env,
-                                v8::Local<v8::FunctionTemplate> target);
+  // The kSlot field here mirrors that of BaseObject::InternalFields::kSlot
+  // because instances deriving from StreamBase generally also derived from
+  // BaseObject (it's possible for it not to, however).
+  enum InternalFields {
+    kSlot = BaseObject::kSlot,
+    kStreamBaseField = BaseObject::kInternalFieldCount,
+    kOnReadFunctionField,
+    kInternalFieldCount
+  };
 
+  static void AddMethods(Environment* env,
+                         v8::Local<v8::FunctionTemplate> target);
+  static void RegisterExternalReferences(ExternalReferenceRegistry* registry);
   virtual bool IsAlive() = 0;
   virtual bool IsClosing() = 0;
   virtual bool IsIPCPipe();
   virtual int GetFD();
 
-  void CallJSOnreadMethod(ssize_t nread, v8::Local<v8::Object> buf);
+  enum StreamBaseJSChecks { DONT_SKIP_NREAD_CHECKS, SKIP_NREAD_CHECKS };
+
+  v8::MaybeLocal<v8::Value> CallJSOnreadMethod(
+      ssize_t nread,
+      v8::Local<v8::ArrayBuffer> ab,
+      size_t offset = 0,
+      StreamBaseJSChecks checks = DONT_SKIP_NREAD_CHECKS);
 
   // This is named `stream_env` to avoid name clashes, because a lot of
   // subclasses are also `BaseObject`s.
-  Environment* stream_env() const;
+  Environment* stream_env() const { return env_; }
 
   // Shut down the current stream. This request can use an existing
   // ShutdownWrap object (that was created in JS), or a new one will be created.
   // Returns 1 in case of a synchronous completion, 0 in case of asynchronous
   // completion, and a libuv error case in case of synchronous failure.
-  int Shutdown(v8::Local<v8::Object> req_wrap_obj = v8::Local<v8::Object>());
+  inline int Shutdown(
+      v8::Local<v8::Object> req_wrap_obj = v8::Local<v8::Object>());
 
   // Write data to the current stream. This request can use an existing
   // WriteWrap object (that was created in JS), or a new one will be created.
@@ -286,7 +339,7 @@ class StreamBase : public StreamResource {
   // asynchronously using `DoWrite()`.
   // If the return value indicates a synchronous completion, no callback will
   // be invoked.
-  StreamWriteResult Write(
+  inline StreamWriteResult Write(
       uv_buf_t* bufs,
       size_t count,
       uv_stream_t* send_handle = nullptr,
@@ -303,8 +356,10 @@ class StreamBase : public StreamResource {
   virtual AsyncWrap* GetAsyncWrap() = 0;
   virtual v8::Local<v8::Object> GetObject();
 
+  static inline StreamBase* FromObject(v8::Local<v8::Object> obj);
+
  protected:
-  explicit StreamBase(Environment* env);
+  inline explicit StreamBase(Environment* env);
 
   // JS Methods
   int ReadStartJS(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -314,30 +369,42 @@ class StreamBase : public StreamResource {
   int WriteBuffer(const v8::FunctionCallbackInfo<v8::Value>& args);
   template <enum encoding enc>
   int WriteString(const v8::FunctionCallbackInfo<v8::Value>& args);
+  int UseUserBuffer(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-  template <class Base>
   static void GetFD(const v8::FunctionCallbackInfo<v8::Value>& args);
-
-  template <class Base>
   static void GetExternal(const v8::FunctionCallbackInfo<v8::Value>& args);
-
-  template <class Base>
   static void GetBytesRead(const v8::FunctionCallbackInfo<v8::Value>& args);
-
-  template <class Base>
   static void GetBytesWritten(const v8::FunctionCallbackInfo<v8::Value>& args);
+  inline void AttachToObject(v8::Local<v8::Object> obj);
 
-  template <class Base,
-            int (StreamBase::*Method)(
+  template <int (StreamBase::*Method)(
       const v8::FunctionCallbackInfo<v8::Value>& args)>
   static void JSMethod(const v8::FunctionCallbackInfo<v8::Value>& args);
+
+  // Internal, used only in StreamBase methods + env.cc.
+  enum StreamBaseStateFields {
+    kReadBytesOrError,
+    kArrayBufferOffset,
+    kBytesWritten,
+    kLastWriteWasAsync,
+    kNumStreamBaseStateFields
+  };
 
  private:
   Environment* env_;
   EmitToJSStreamListener default_listener_;
 
+  void SetWriteResult(const StreamWriteResult& res);
+  static void AddMethod(Environment* env,
+                        v8::Local<v8::Signature> sig,
+                        enum v8::PropertyAttribute attributes,
+                        v8::Local<v8::FunctionTemplate> t,
+                        JSMethodFunction* stream_method,
+                        v8::Local<v8::String> str);
+
   friend class WriteWrap;
   friend class ShutdownWrap;
+  friend class Environment;  // For kNumStreamBaseStateFields.
 };
 
 
@@ -356,6 +423,10 @@ class SimpleShutdownWrap : public ShutdownWrap, public OtherBase {
   SET_NO_MEMORY_INFO()
   SET_MEMORY_INFO_NAME(SimpleShutdownWrap)
   SET_SELF_SIZE(SimpleShutdownWrap)
+
+  bool IsNotIndicativeOfMemoryLeakAtExit() const override {
+    return OtherBase::IsNotIndicativeOfMemoryLeakAtExit();
+  }
 };
 
 template <typename OtherBase>
@@ -369,6 +440,10 @@ class SimpleWriteWrap : public WriteWrap, public OtherBase {
   SET_NO_MEMORY_INFO()
   SET_MEMORY_INFO_NAME(SimpleWriteWrap)
   SET_SELF_SIZE(SimpleWriteWrap)
+
+  bool IsNotIndicativeOfMemoryLeakAtExit() const override {
+    return OtherBase::IsNotIndicativeOfMemoryLeakAtExit();
+  }
 };
 
 }  // namespace node

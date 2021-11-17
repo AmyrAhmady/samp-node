@@ -33,6 +33,10 @@ namespace sampnode
 		v8::Isolate* isolate = args.GetIsolate();
 		v8::Locker locker(isolate);
 		v8::Isolate::Scope isolateScope(isolate);
+
+		auto _context = isolate->GetCurrentContext();
+		v8::Context::Scope contextScope(_context);
+
 		v8::TryCatch eh(isolate);
 
 		v8::String::Utf8Value str(isolate, args[0]);
@@ -70,7 +74,7 @@ namespace sampnode
 			{
 			case 'i':
 			{
-				param_value[i] = args[k]->Int32Value();
+				param_value[i] = args[k]->Int32Value(_context).ToChecked();
 				params[j++] = static_cast<void*>(&param_value[i]);
 				k++;
 				sprintf(str_format, "%si", str_format);
@@ -80,7 +84,7 @@ namespace sampnode
 			case 'f':
 			{
 				float val = 0.0;
-				if (!args[k]->IsUndefined()) val = static_cast<float>(args[k]->NumberValue());
+				if (!args[k]->IsUndefined()) val = static_cast<float>(args[k]->NumberValue(_context).ToChecked());
 
 				param_value[i] = amx_ftoc(val);
 				params[j++] = static_cast<void*>(&param_value[i]);
@@ -125,7 +129,7 @@ namespace sampnode
 
 				for (size_t b = 0; b < size; b++)
 				{
-					value[b] = a->Get(b)->Int32Value();
+					value[b] = a->Get(_context, b).ToLocalChecked()->Int32Value(_context).ToChecked();
 				}
 
 				sprintf(str_format, "%sa[%i]", str_format, static_cast<int>(size));
@@ -150,7 +154,7 @@ namespace sampnode
 
 				for (size_t b = 0; b < size; b++)
 				{
-					float val = static_cast<float>(a->Get(b)->NumberValue());
+					float val = static_cast<float>(a->Get(_context, b).ToLocalChecked()->NumberValue(_context).ToChecked());
 					value[b] = amx_ftoc(val);
 
 				}
@@ -172,7 +176,7 @@ namespace sampnode
 
 			case 'A':
 			{
-				const int size = args[k]->Int32Value();
+				const int size = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = size;
 				cell* value = new cell[size];
 				for (int c = 0; c < size; c++)
@@ -187,7 +191,7 @@ namespace sampnode
 
 			case 'V':
 			{
-				const int size = args[k]->Int32Value();
+				const int size = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = size;
 				cell* value = new cell[size];
 				float fl = 0.0;
@@ -205,7 +209,7 @@ namespace sampnode
 			case 'S':
 			{
 
-				unsigned int strl = args[k++]->Int32Value();
+				unsigned int strl = args[k++]->Int32Value(_context).ToChecked();
 				param_size[j] = static_cast<cell>(strl);
 
 				if (strl < 1)
@@ -259,10 +263,10 @@ namespace sampnode
 					cell* prams = static_cast<cell*>(params[j]);
 					for (int c = 0; c < size; c++)
 					{
-						rArr->Set(c, v8::Integer::New(args.GetIsolate(), prams[c]));
+						rArr->Set(_context, c, v8::Integer::New(args.GetIsolate(), prams[c]));
 					}
 
-					arr->Set(vars++, rArr);
+					arr->Set(_context, vars++, rArr);
 					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
@@ -274,23 +278,23 @@ namespace sampnode
 					v8::Local<v8::Array> rArr = v8::Array::New(args.GetIsolate(), size);
 					for (int c = 0; c < size; c++)
 					{
-						rArr->Set(c, v8::Number::New(args.GetIsolate(), amx_ctof(param_array[c])));
+						rArr->Set(_context, c, v8::Number::New(args.GetIsolate(), amx_ctof(param_array[c])));
 					}
-					arr->Set(vars++, rArr);
+					arr->Set(_context, vars++, rArr);
 					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
 				case 'I':
 				{
 					int val = *static_cast<cell*>(params[j++]);
-					arr->Set(vars++, v8::Integer::New(args.GetIsolate(), val));
+					arr->Set(_context, vars++, v8::Integer::New(args.GetIsolate(), val));
 
 				}
 				break;
 				case 'F':
 				{
 					float val = amx_ctof(*static_cast<cell*>(params[j++]));
-					arr->Set(vars++, v8::Number::New(args.GetIsolate(), val));
+					arr->Set(_context, vars++, v8::Number::New(args.GetIsolate(), val));
 				}
 				break;
 				case 'S':
@@ -300,7 +304,7 @@ namespace sampnode
 					char* s_str = static_cast<char*>(params[j]);
 					s_str[s_len - 1] = '\0';
 
-					arr->Set(vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str));
+					arr->Set(_context, vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str).ToLocalChecked());
 					i++;
 					delete[] static_cast<char*>(params[j++]);
 
@@ -311,7 +315,7 @@ namespace sampnode
 
 			if (vars == 1)
 			{
-				v8::Local<v8::Value> jsval = arr->Get(0);
+				v8::Local<v8::Value> jsval = arr->Get(_context, 0).ToLocalChecked();
 				args.GetReturnValue().Set(jsval);
 			}
 			else if (vars > 1)
@@ -327,7 +331,7 @@ namespace sampnode
 		if (eh.HasCaught())
 		{
 			v8::String::Utf8Value str(isolate, eh.Exception());
-			v8::String::Utf8Value stack(isolate, eh.StackTrace(args.GetIsolate()->GetCallingContext()).ToLocalChecked());
+			v8::String::Utf8Value stack(isolate, eh.StackTrace(_context).ToLocalChecked());
 
 			L_ERROR << "[samp-node] event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 		}
@@ -338,6 +342,10 @@ namespace sampnode
 		v8::Isolate* isolate = args.GetIsolate();
 		v8::Locker locker(isolate);
 		v8::Isolate::Scope isolateScope(isolate);
+
+		auto _context = isolate->GetCurrentContext();
+		v8::Context::Scope contextScope(_context);
+
 		v8::TryCatch eh(isolate);
 
 		v8::String::Utf8Value str(isolate, args[0]);
@@ -375,7 +383,7 @@ namespace sampnode
 			{
 			case 'i':
 			{
-				param_value[i] = args[k]->Int32Value();
+				param_value[i] = args[k]->Int32Value(_context).ToChecked();
 				params[j++] = static_cast<void*>(&param_value[i]);
 				k++;
 				sprintf(str_format, "%si", str_format);
@@ -385,7 +393,7 @@ namespace sampnode
 			case 'f':
 			{
 				float val = 0.0;
-				if (!args[k]->IsUndefined()) val = static_cast<float>(args[k]->NumberValue());
+				if (!args[k]->IsUndefined()) val = static_cast<float>(args[k]->NumberValue(_context).ToChecked());
 
 				param_value[i] = amx_ftoc(val);
 				params[j++] = static_cast<void*>(&param_value[i]);
@@ -430,7 +438,7 @@ namespace sampnode
 
 				for (size_t b = 0; b < size; b++)
 				{
-					value[b] = a->Get(b)->Int32Value();
+					value[b] = a->Get(_context, b).ToLocalChecked()->Int32Value(_context).ToChecked();
 				}
 
 				sprintf(str_format, "%sa[%i]", str_format, static_cast<int>(size));
@@ -455,7 +463,7 @@ namespace sampnode
 
 				for (size_t b = 0; b < size; b++)
 				{
-					float val = static_cast<float>(a->Get(b)->NumberValue());
+					float val = static_cast<float>(a->Get(_context, b).ToLocalChecked()->NumberValue(_context).ToChecked());
 					value[b] = amx_ftoc(val);
 
 				}
@@ -477,7 +485,7 @@ namespace sampnode
 
 			case 'A':
 			{
-				const int size = args[k]->Int32Value();
+				const int size = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = size;
 				cell* value = new cell[size];
 				for (int c = 0; c < size; c++)
@@ -492,7 +500,7 @@ namespace sampnode
 
 			case 'V':
 			{
-				const int size = args[k]->Int32Value();
+				const int size = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = size;
 				cell* value = new cell[size];
 				float fl = 0.0;
@@ -510,7 +518,7 @@ namespace sampnode
 			case 'S':
 			{
 
-				unsigned int strl = args[k++]->Int32Value();
+				unsigned int strl = args[k++]->Int32Value(_context).ToChecked();
 				param_size[j] = static_cast<cell>(strl);
 
 				if (strl < 1)
@@ -564,10 +572,10 @@ namespace sampnode
 					cell* prams = static_cast<cell*>(params[j]);
 					for (int c = 0; c < size; c++)
 					{
-						rArr->Set(c, v8::Integer::New(args.GetIsolate(), prams[c]));
+						rArr->Set(_context, c, v8::Integer::New(args.GetIsolate(), prams[c]));
 					}
 
-					arr->Set(vars++, rArr);
+					arr->Set(_context, vars++, rArr);
 					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
@@ -579,23 +587,23 @@ namespace sampnode
 					v8::Local<v8::Array> rArr = v8::Array::New(args.GetIsolate(), size);
 					for (int c = 0; c < size; c++)
 					{
-						rArr->Set(c, v8::Number::New(args.GetIsolate(), amx_ctof(param_array[c])));
+						rArr->Set(_context, c, v8::Number::New(args.GetIsolate(), amx_ctof(param_array[c])));
 					}
-					arr->Set(vars++, rArr);
+					arr->Set(_context, vars++, rArr);
 					delete[] static_cast<char*>(params[j++]);
 				}
 				break;
 				case 'I':
 				{
 					int val = *static_cast<cell*>(params[j++]);
-					arr->Set(vars++, v8::Integer::New(args.GetIsolate(), val));
+					arr->Set(_context, vars++, v8::Integer::New(args.GetIsolate(), val));
 
 				}
 				break;
 				case 'F':
 				{
 					float val = amx_ctof(*static_cast<cell*>(params[j++]));
-					arr->Set(vars++, v8::Number::New(args.GetIsolate(), val));
+					arr->Set(_context, vars++, v8::Number::New(args.GetIsolate(), val));
 				}
 				break;
 				case 'S':
@@ -605,7 +613,7 @@ namespace sampnode
 					char* s_str = static_cast<char*>(params[j]);
 					s_str[s_len - 1] = '\0';
 
-					arr->Set(vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str));
+					arr->Set(_context, vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str).ToLocalChecked());
 					i++;
 					delete[] static_cast<char*>(params[j++]);
 
@@ -616,7 +624,7 @@ namespace sampnode
 
 			if (vars == 1)
 			{
-				v8::Local<v8::Value> jsval = arr->Get(0);
+				v8::Local<v8::Value> jsval = arr->Get(_context, 0).ToLocalChecked();
 				args.GetReturnValue().Set(jsval);
 			}
 			else if (vars > 1)
@@ -637,7 +645,7 @@ namespace sampnode
 		if (eh.HasCaught())
 		{
 			v8::String::Utf8Value str(isolate, eh.Exception());
-			v8::String::Utf8Value stack(isolate, eh.StackTrace(args.GetIsolate()->GetCallingContext()).ToLocalChecked());
+			v8::String::Utf8Value stack(isolate, eh.StackTrace(_context).ToLocalChecked());
 
 			L_ERROR << "[samp-node] event handling function in resource: " << *str << "\nstack:\n" << *stack << "\n";
 		}

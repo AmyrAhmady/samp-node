@@ -23,9 +23,14 @@ namespace sampnode
 	{
 		if (info.Length() > 1)
 		{
-			v8::Locker locker(info.GetIsolate());
-			v8::Isolate::Scope isolateScope(info.GetIsolate());
-			v8::HandleScope scope(info.GetIsolate());
+			auto isolate = info.GetIsolate();
+			v8::Locker locker(isolate);
+			v8::Isolate::Scope isolateScope(isolate);
+			v8::HandleScope scope(isolate);
+
+			v8::Local<v8::Context> context = isolate->GetCurrentContext();
+			v8::Context::Scope contextScope(context);
+
 			if (!info[0]->IsString() || !info[1]->IsString())
 			{
 				info.GetReturnValue().Set(false);
@@ -33,8 +38,8 @@ namespace sampnode
 			}
 			else
 			{
-				std::string eventName = utils::js_to_string(info[0]);
-				std::string paramTypes = utils::js_to_string(info[1]);
+				std::string eventName = utils::js_to_string(isolate, info[0]);
+				std::string paramTypes = utils::js_to_string(isolate, info[1]);
 				if (events.find(eventName) != events.end())
 				{
 					info.GetReturnValue().Set(false);
@@ -50,14 +55,19 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
-			v8::Locker locker(info.GetIsolate());
-			v8::Isolate::Scope isolateScope(info.GetIsolate());
-			v8::HandleScope scope(info.GetIsolate());
+			auto isolate = info.GetIsolate();
+			v8::Locker locker(isolate);
+			v8::Isolate::Scope isolateScope(isolate);
+			v8::HandleScope scope(isolate);
+
+			v8::Local<v8::Context> context = isolate->GetCurrentContext();
+			v8::Context::Scope contextScope(context);
+
 			if (!info[0]->IsString())
 				return;
 
 			int funcArgIndex = info.Length() - 1;
-			std::string eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(isolate, info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 			event* _event = events[eventName];
@@ -65,7 +75,7 @@ namespace sampnode
 			if ((funcArgIndex >= 0) && (info[funcArgIndex]->IsFunction()))
 			{
 				v8::Local<v8::Function> function = info[funcArgIndex].As<v8::Function>();
-				_event->append(function);
+				_event->append(context, function);
 			}
 		}
 	}
@@ -74,13 +84,19 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
-			v8::Locker locker(info.GetIsolate());
-			v8::Isolate::Scope isolateScope(info.GetIsolate());
-			v8::HandleScope scope(info.GetIsolate());
+			auto isolate = info.GetIsolate();
+			v8::Locker locker(isolate);
+			v8::Isolate::Scope isolateScope(isolate);
+			v8::HandleScope scope(isolate);
+
+			v8::Local<v8::Context> _context = isolate->GetCurrentContext();
+
+			v8::Context::Scope contextScope(_context);
+
 			if (!info[0]->IsString())
 				return;
 
-			std::string eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(isolate, info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 
@@ -93,14 +109,12 @@ namespace sampnode
 					v8::Local<v8::Array> funcArray = v8::Local<v8::Array>::Cast(info[1]);
 					for (unsigned int i = 0; i < funcArray->Length(); i++)
 					{
-						const v8::Local<v8::Function>& function = funcArray->Get(i).As<v8::Function>();
+						const v8::Local<v8::Function>& function = funcArray->Get(_context, i).ToLocalChecked().As<v8::Function>();
 						for (auto& element : _event->functionList)
 						{
-							if (element.function.Get(info.GetIsolate()) == function)
+							if (element.context == _context && element.function.Get(isolate) == function)
 							{
-								v8::Isolate* isolate = info.GetIsolate();
-								v8::Locker locker(isolate);
-								_event->remove(element.function.Get(info.GetIsolate()));
+								_event->remove(element);
 								break;
 							}
 						}
@@ -111,10 +125,9 @@ namespace sampnode
 				{
 					v8::Local<v8::Function> function = v8::Local<v8::Function>::Cast(info[1]);
 					for (auto& element : _event->functionList) {
-						v8::Locker locker(info.GetIsolate());
-						if (element.function.Get(info.GetIsolate()) == function)
+						if (element.context == _context && element.function.Get(isolate) == function)
 						{
-							_event->remove(element.function.Get(info.GetIsolate()));
+							_event->remove(element);
 							break;
 						}
 					}
@@ -122,7 +135,14 @@ namespace sampnode
 			}
 			else if (info.Length() == 1)
 			{
-				_event->remove_all();
+				auto copiedFunctionList = _event->functionList;
+
+				for (auto& element : copiedFunctionList) {
+					if (element.context == _context)
+					{
+						_event->remove(element);
+					}
+				}
 			}
 		}
 	}
@@ -131,13 +151,15 @@ namespace sampnode
 	{
 		if (info.Length() > 0)
 		{
-			v8::Locker locker(info.GetIsolate());
-			v8::Isolate::Scope isolateScope(info.GetIsolate());
-			v8::HandleScope scope(info.GetIsolate());
+			auto isolate = info.GetIsolate();
+			v8::Locker locker(isolate);
+			v8::Isolate::Scope isolateScope(isolate);
+			v8::HandleScope scope(isolate);
+
 			if (!info[0]->IsString())
 				return;
 
-			std::string eventName = utils::js_to_string(info[0]);
+			std::string eventName = utils::js_to_string(isolate, info[0]);
 
 			if (events.find(eventName) == events.end()) return;
 			event* _event = events[eventName];
@@ -186,10 +208,9 @@ namespace sampnode
 
 	}
 
-	void event::append(const v8::Local<v8::Function>& function)
+	void event::append(const v8::Local<v8::Context>& context, const v8::Local<v8::Function>& function)
 	{
 		v8::Isolate* isolate = function->GetIsolate();
-		v8::Locker locker(isolate);
 
 		bool result = std::any_of(functionList.cbegin(), functionList.cend(),
 			[&function, &isolate](const EventListener_t& listener)
@@ -205,22 +226,15 @@ namespace sampnode
 		functionList.push_back(
 			EventListener_t(
 				isolate,
-				isolate->GetCurrentContext(),
+				context,
 				function
 			)
 		);
 	}
 
-	void event::remove(const v8::Local<v8::Function>& function)
+	void event::remove(const EventListener_t& eventListener)
 	{
-		v8::Isolate* isolate = function->GetIsolate();
-		EventListener_t eventListener = EventListener_t(
-			isolate,
-			isolate->GetCurrentContext(),
-			function
-		);
-		functionList.erase(std::remove(functionList.begin(), functionList.end(), eventListener));
-		functionList.shrink_to_fit();
+		functionList.erase(std::remove(functionList.begin(), functionList.end(), eventListener), functionList.end());
 	}
 
 	void event::remove_all()
@@ -230,13 +244,19 @@ namespace sampnode
 
 	void event::call(v8::Local<v8::Value>* args, int argCount)
 	{
-		for (auto& listener : functionList)
+		std::vector<EventListener_t> copiedFunctionList = functionList;
+
+		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
 			v8::HandleScope hs(isolate);
-			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, listener.context);
+			v8::Local<v8::Context> ctx = listener.context.Get(isolate);
 			v8::Context::Scope cs(ctx);
 
 			isolate->CancelTerminateExecution();
@@ -244,7 +264,7 @@ namespace sampnode
 			v8::TryCatch eh(isolate);
 
 			v8::Local<v8::Function> function = listener.function.Get(isolate);
-			function->Call(listener.context.Get(isolate)->Global(), argCount, args);
+			function->Call(ctx, ctx->Global(), argCount, args);
 
 			if (argCount > 0) delete[] args;
 
@@ -260,13 +280,19 @@ namespace sampnode
 
 	void event::call(AMX* amx, cell* params, cell* retval)
 	{
-		for (auto& listener : functionList)
+		std::vector<EventListener_t> copiedFunctionList = functionList;
+
+		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(isolate);
 			v8::Isolate::Scope isolateScope(isolate);
 			v8::HandleScope hs(isolate);
-			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(isolate, listener.context);
+			v8::Local<v8::Context> ctx = listener.context.Get(isolate);
 			v8::Context::Scope cs(ctx);
 
 			isolate->CancelTerminateExecution();
@@ -298,7 +324,7 @@ namespace sampnode
 						L_ERROR << "Can't get string address: " << name.c_str();
 						return;
 					}
-					argv[i] = v8::String::NewFromUtf8(isolate, sval);
+					argv[i] = v8::String::NewFromUtf8(isolate, sval).ToLocalChecked();
 					break;
 				}
 				case 'a':
@@ -314,7 +340,7 @@ namespace sampnode
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
-						jsArray->Set(j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
+						jsArray->Set(ctx, j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
 					}
 					argv[i] = jsArray;
 					i++;
@@ -333,7 +359,7 @@ namespace sampnode
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
-						jsArray->Set(j, v8::Integer::New(isolate, amx_ctof(array[j])));
+						jsArray->Set(ctx, j, v8::Integer::New(isolate, amx_ctof(array[j])));
 					}
 					argv[i] = jsArray;
 					i++;
@@ -357,8 +383,9 @@ namespace sampnode
 				}
 			}
 
+
 			v8::Local<v8::Function> function = listener.function.Get(isolate);
-			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(isolate)->Global(), argc, argv);
+			v8::Local<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv).ToLocalChecked();
 
 			if (argc > 0) delete[] argv;
 
@@ -366,12 +393,12 @@ namespace sampnode
 			{
 				v8::String::Utf8Value str(isolate, eh.Exception());
 				v8::String::Utf8Value stack(isolate, eh.StackTrace(listener.context.Get(isolate)).ToLocalChecked());
-				
+
 				L_ERROR << "Exception thrown: " << *str << "\nstack:\n" << *stack;
 			}
 			else
 			{
-				int cppIntReturnValue = returnValue->Int32Value();
+				int cppIntReturnValue = returnValue->Int32Value(ctx).ToChecked();
 				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}
@@ -379,13 +406,19 @@ namespace sampnode
 
 	void event::call_from_pawn_native(AMX* amx, cell* params, cell* retval)
 	{
-		for (auto& listener : functionList)
+		std::vector<EventListener_t> copiedFunctionList = functionList;
+
+		for (auto& listener : copiedFunctionList)
 		{
+			if (std::find(functionList.begin(), functionList.end(), listener) == functionList.end()) {
+				continue;
+			}
+
 			v8::Isolate* isolate = listener.isolate;
 			v8::Locker v8Locker(listener.isolate);
 			v8::Isolate::Scope isolateScope(isolate);
 			v8::HandleScope hs(listener.isolate);
-			v8::Local<v8::Context> ctx = v8::Local<v8::Context>::New(listener.isolate, listener.context);
+			v8::Local<v8::Context> ctx = listener.context.Get(isolate);
 			v8::Context::Scope cs(ctx);
 			v8::TryCatch eh(listener.isolate);
 
@@ -415,7 +448,7 @@ namespace sampnode
 						L_ERROR << "Can't get string address: " << name.c_str();
 						return;
 					}
-					argv[i] = v8::String::NewFromUtf8(isolate, sval);
+					argv[i] = v8::String::NewFromUtf8(isolate, sval).ToLocalChecked();
 					break;
 				}
 				case 'a':
@@ -430,7 +463,7 @@ namespace sampnode
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
-						jsArray->Set(j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
+						jsArray->Set(ctx, j, v8::Integer::New(isolate, static_cast<uint32_t>(array[j])));
 					}
 					argv[i] = jsArray;
 					paramOffset++;
@@ -449,7 +482,7 @@ namespace sampnode
 					v8::Local<v8::Array> jsArray = v8::Array::New(isolate, size);
 					for (int j = 0; j < size; j++)
 					{
-						jsArray->Set(j, v8::Integer::New(isolate, amx_ctof(array[j])));
+						jsArray->Set(ctx, j, v8::Integer::New(isolate, amx_ctof(array[j])));
 					}
 					argv[i] = jsArray;
 					paramOffset++;
@@ -474,7 +507,7 @@ namespace sampnode
 			}
 
 			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
-			v8::Local<v8::Value> returnValue = function->Call(listener.context.Get(listener.isolate)->Global(), argc, argv);
+			v8::Local<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv).ToLocalChecked();
 
 			if (argc > 0) delete[] argv;
 
@@ -487,7 +520,7 @@ namespace sampnode
 			}
 			else
 			{
-				int cppIntReturnValue = returnValue->Int32Value();
+				int cppIntReturnValue = returnValue->Int32Value(ctx).ToChecked();
 				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}

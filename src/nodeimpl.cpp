@@ -4,23 +4,12 @@
 #include "resource.hpp"
 #include "nodeimpl.hpp"
 
-class ArrayBufferAllocator : public v8::ArrayBuffer::Allocator
-{
-public:
-	virtual void* Allocate(size_t length) override
-	{
-		void* data = AllocateUninitialized(length);
-		return data == NULL ? data : memset(data, 0, length);
-	}
-	virtual void* AllocateUninitialized(size_t length) override { return malloc(length); }
-	virtual void Free(void* data, size_t) override { free(data); }
-};
-
 void OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error)
 {
 	auto isolate = sampnode::nodeImpl.GetIsolate();
 	v8::Locker locker(isolate);
 	v8::Isolate::Scope isolateScope(isolate);
+	v8::HandleScope handleScope(isolate);
 	v8::String::Utf8Value messageStr(isolate, message->Get());
 	v8::String::Utf8Value errorStr(isolate, error);
 
@@ -37,7 +26,7 @@ void OnMessage(v8::Local<v8::Message> message, v8::Local<v8::Value> error)
 		stack << *sourceStr << "(" << frame->GetLineNumber() << "," << frame->GetColumn() << "): " << (*functionStr ? *functionStr : "") << "\n";
 	}
 
-	printf("%s\n%s\n%s\n", *messageStr, stack.str(), *errorStr);
+	printf("%s\n%s\n%s\n", *messageStr, stack.str().c_str(), *errorStr);
 }
 
 namespace sampnode
@@ -60,7 +49,7 @@ namespace sampnode
 		}
 	}
 
-	NodeImpl::NodeImpl()
+	NodeImpl::NodeImpl(): nodeData(nullptr, node::FreeIsolateData)
 	{}
 
 	NodeImpl::~NodeImpl()
@@ -85,45 +74,39 @@ namespace sampnode
 	void NodeImpl::Initialize(const Props_t& config)
 	{
 		mainConfig = config;
-		auto platform = node::InitializeV8Platform(4);
-		v8Platform = std::unique_ptr<v8::Platform>(platform);
+		v8Platform = node::MultiIsolatePlatform::Create(4);
+		v8::V8::InitializePlatform(v8Platform.get());
 
 		const char* flags = "--expose_gc";
 		v8::V8::SetFlagsFromString(flags, strlen(flags));
 
 		v8::V8::Initialize();
 
-		arrayBufferAllocator = std::make_unique<ArrayBufferAllocator>();
+		arrayBufferAllocator = node::ArrayBufferAllocator::Create();
 
-		v8::Isolate::CreateParams params;
-		params.array_buffer_allocator = arrayBufferAllocator.get();
+		nodeLoop = std::make_unique<UvLoop>("mainNode");
 
-		v8Isolate = v8::Isolate::New(params);
+		v8Isolate = node::NewIsolate(arrayBufferAllocator.get(), nodeLoop->GetLoop(), v8Platform.get());
 		v8Isolate->SetFatalErrorHandler([](const char* location, const char* message)
 			{
 				exit(0);
 			});
 
 		v8Isolate->SetCaptureStackTraceForUncaughtExceptions(true);
+		v8Isolate->AddMessageListener(OnMessage);
 
 		v8::Locker locker(v8Isolate);
 		v8::Isolate::Scope isolateScope(v8Isolate);
-		v8::HandleScope handle_scope(v8Isolate);
-		v8Isolate->AddMessageListener(OnMessage);
 
-		int eac;
-		const char** eav;
+		std::vector<std::string> args{"--expose-internals", "--trace-uncaught", "--inspect"};
+		std::vector<std::string> exec_args;
+		std::vector<std::string> errors;
 
-		std::vector<const char*> args{
-			"",
-			"--expose-internals"
-		};
+		node::InitializeNodeWithArgs(&args, &exec_args, &errors);
 
-		int argc = args.size();
+		auto isolateData = node::CreateIsolateData(v8Isolate, nodeLoop->GetLoop(), v8Platform.get(), arrayBufferAllocator.get());
 
-		node::Init(&argc, args.data(), &eac, &eav);
-		nodeLoop = std::make_unique<UvLoop>("mainNode");
-		nodeData = node::CreateIsolateData(v8Isolate, nodeLoop->GetLoop(), platform, (node::ArrayBufferAllocator*)arrayBufferAllocator.get());
+		nodeData.reset(isolateData);
 	}
 
 	bool NodeImpl::LoadResource(const std::string& name)
@@ -159,5 +142,16 @@ namespace sampnode
 	bool NodeImpl::ReloadResource(const std::string& name)
 	{
 		return true;
+	}
+
+	void NodeImpl::Stop()
+	{
+		for (auto& resource : resourceNamesPool)
+		{
+			UnloadResource(resource.first);
+		}
+		node::FreeIsolateData(nodeData.get());
+		v8::V8::Dispose();
+		v8::V8::ShutdownPlatform();
 	}
 }
