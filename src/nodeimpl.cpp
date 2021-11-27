@@ -89,7 +89,9 @@ namespace sampnode
 		v8Isolate = node::NewIsolate(arrayBufferAllocator.get(), nodeLoop->GetLoop(), v8Platform.get());
 		v8Isolate->SetFatalErrorHandler([](const char* location, const char* message)
 			{
-				exit(0);
+				L_ERROR << "at " << location;
+				L_ERROR << message;
+				exit(1);
 			});
 
 		v8Isolate->SetCaptureStackTraceForUncaughtExceptions(true);
@@ -98,7 +100,7 @@ namespace sampnode
 		v8::Locker locker(v8Isolate);
 		v8::Isolate::Scope isolateScope(v8Isolate);
 
-		std::vector<std::string> args{"--expose-internals", "--trace-uncaught", "--inspect"};
+		std::vector<std::string> args{"--expose-internals", "--trace-uncaught", "--inspect", "--trace-warnings"};
 		std::vector<std::string> exec_args;
 		std::vector<std::string> errors;
 

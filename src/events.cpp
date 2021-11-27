@@ -385,7 +385,7 @@ namespace sampnode
 
 
 			v8::Local<v8::Function> function = listener.function.Get(isolate);
-			v8::Local<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv).ToLocalChecked();
+			v8::MaybeLocal<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv);
 
 			if (argc > 0) delete[] argv;
 
@@ -398,7 +398,7 @@ namespace sampnode
 			}
 			else
 			{
-				int cppIntReturnValue = returnValue->Int32Value(ctx).ToChecked();
+				int cppIntReturnValue = returnValue.ToLocalChecked()->Int32Value(ctx).ToChecked();
 				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}
@@ -507,7 +507,7 @@ namespace sampnode
 			}
 
 			v8::Local<v8::Function> function = listener.function.Get(listener.isolate);
-			v8::Local<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv).ToLocalChecked();
+			v8::MaybeLocal<v8::Value> returnValue = function->Call(ctx, ctx->Global(), argc, argv);
 
 			if (argc > 0) delete[] argv;
 
@@ -520,7 +520,7 @@ namespace sampnode
 			}
 			else
 			{
-				int cppIntReturnValue = returnValue->Int32Value(ctx).ToChecked();
+				int cppIntReturnValue = returnValue.ToLocalChecked()->Int32Value(ctx).ToChecked();
 				if (retval != nullptr) *retval = static_cast<cell>(cppIntReturnValue);
 			}
 		}
