@@ -1,5 +1,5 @@
 # samp-node
-a SA-MP plugin to support nodejs apps and run them on your server
+samp-node is a SA-MP plugin that allows you to run Node.js, meaning you can code in JS/TS instead of pawn.
 
 ---------
 
@@ -12,10 +12,19 @@ You can always find latest builds [here](https://github.com/AmyrAhmady/samp-node
 But if you are looking for a stable version (or using sampctl), please visit [here](https://github.com/AmyrAhmady/samp-node/wiki/Installation)
 
 
-## type definitions for TypeScript
-here's a link to the repository: https://github.com/samp-dev/node \
-follow the instructions there to make best use of it\
-special thanks to [pkfln (peek)](https://github.com/pkfln).
+## Node version
+Currently samp-node uses Node.js v16.
+
+
+## Tips
+You should transpile your JS into commonjs to avoid issues. \
+It's recommended you use TypeScript and setup a tsconfig that extends [@tsconfig/node16](https://www.npmjs.com/package/@tsconfig/node16).
+
+
+## Type definitions for TypeScript
+If you're using TypeScript then take a look at this repoistory: https://github.com/samp-dev/node \
+Instructions can be found there on how to install and use them. \
+*Special thanks to [pkfln (peek)](https://github.com/pkfln).*
 
 
 ## Credits
