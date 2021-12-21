@@ -209,7 +209,7 @@ namespace sampnode
 			case 'S':
 			{
 
-				unsigned int strl = args[k++]->Int32Value(_context).ToChecked();
+				unsigned int strl = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = static_cast<cell>(strl);
 
 				if (strl < 1)
@@ -222,7 +222,6 @@ namespace sampnode
 				char* mycell = new char[strl]();
 				params[j++] = &mycell[0];
 				vars++;
-				i++;
 			}
 			break;
 
@@ -305,7 +304,6 @@ namespace sampnode
 					s_str[s_len - 1] = '\0';
 
 					arr->Set(_context, vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str).ToLocalChecked());
-					i++;
 					delete[] static_cast<char*>(params[j++]);
 
 				}
@@ -518,7 +516,7 @@ namespace sampnode
 			case 'S':
 			{
 
-				unsigned int strl = args[k++]->Int32Value(_context).ToChecked();
+				unsigned int strl = args[k]->Int32Value(_context).ToChecked();
 				param_size[j] = static_cast<cell>(strl);
 
 				if (strl < 1)
@@ -531,7 +529,6 @@ namespace sampnode
 				char* mycell = new char[strl]();
 				params[j++] = &mycell[0];
 				vars++;
-				i++;
 			}
 			break;
 
@@ -614,7 +611,6 @@ namespace sampnode
 					s_str[s_len - 1] = '\0';
 
 					arr->Set(_context, vars++, v8::String::NewFromUtf8(args.GetIsolate(), s_str).ToLocalChecked());
-					i++;
 					delete[] static_cast<char*>(params[j++]);
 
 				}
