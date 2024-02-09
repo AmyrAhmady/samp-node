@@ -169,6 +169,7 @@ namespace sampnode
 			case 'I':
 			{
 				vars++;
+				param_value[i] = 0;
 				params[j++] = static_cast<void*>(&param_value[i]);
 				sprintf(str_format, "%sR", str_format);
 			}
@@ -474,6 +475,7 @@ namespace sampnode
 			case 'I':
 			{
 				vars++;
+				param_value[i] = 0;
 				params[j++] = static_cast<void*>(&param_value[i]);
 				sprintf(str_format, "%sR", str_format);
 			}
