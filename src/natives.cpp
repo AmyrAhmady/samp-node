@@ -169,6 +169,7 @@ namespace sampnode
 			case 'I':
 			{
 				vars++;
+				param_value[i] = 0;
 				params[j++] = static_cast<void*>(&param_value[i]);
 				sprintf(str_format, "%sR", str_format);
 			}
@@ -311,13 +312,11 @@ namespace sampnode
 				}
 			}
 
-			if (vars == 1)
+			if (vars >= 1)
 			{
-				v8::Local<v8::Value> jsval = arr->Get(_context, 0).ToLocalChecked();
-				args.GetReturnValue().Set(jsval);
-			}
-			else if (vars > 1)
+				arr->Set(_context, vars, v8::Integer::New(args.GetIsolate(), retval));
 				args.GetReturnValue().Set(arr);
+			}
 			else
 				args.GetReturnValue().Set(retval);
 		}
@@ -476,6 +475,7 @@ namespace sampnode
 			case 'I':
 			{
 				vars++;
+				param_value[i] = 0;
 				params[j++] = static_cast<void*>(&param_value[i]);
 				sprintf(str_format, "%sR", str_format);
 			}
@@ -618,13 +618,9 @@ namespace sampnode
 				}
 			}
 
-			if (vars == 1)
+			if (vars >= 1)
 			{
-				v8::Local<v8::Value> jsval = arr->Get(_context, 0).ToLocalChecked();
-				args.GetReturnValue().Set(jsval);
-			}
-			else if (vars > 1)
-			{
+				arr->Set(_context, vars, v8::Number::New(args.GetIsolate(), static_cast<double>(amx_ctof(retval))));
 				args.GetReturnValue().Set(arr);
 			}
 			else
